@@ -5,7 +5,6 @@ members = [
     "crates/macwarden-catalog",
     "crates/macwarden-launchd",
     "crates/macwarden-snapshot",
-    "crates/macknows",
 ]
 resolver = "2"
 

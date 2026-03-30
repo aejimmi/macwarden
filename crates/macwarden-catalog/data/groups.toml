@@ -339,3 +339,46 @@ patterns = [
     "com.apple.passd",
     "com.apple.nfcd",
 ]
+
+[[group]]
+name = "xcode"
+description = "Xcode dev tools — wireless device pairing (port 3722), instruments, simulators"
+safety = "optional"
+patterns = [
+    "com.apple.dt.*",
+    "com.apple.CoreDevice.remotepairingd",
+    "com.apple.instruments*",
+    "com.apple.simulated*",
+    "com.apple.testmanagerd*",
+    "com.apple.rpmuxd",
+]
+
+[[group]]
+name = "airplay"
+description = "AirPlay receiver — listens on ports 7000 (video) and 5000 (audio). Open to anyone on your LAN"
+safety = "optional"
+patterns = [
+    "com.apple.controlcenter",
+    "com.apple.AirPlayXPCHelper",
+    "com.apple.AirPlayUIAgent",
+]
+
+[[group]]
+name = "widgets"
+description = "iPhone/Mac widget sync daemon. Listens on a random UDP port. Unnecessary if you don't use iPhone widgets on Mac"
+safety = "recommended"
+patterns = [
+    "com.apple.replicatord",
+    "com.apple.chronod",
+]
+
+[[group]]
+name = "continuity"
+description = "Handoff, Universal Clipboard, phone call relay. rapportd listens on port 62726"
+safety = "optional"
+patterns = [
+    "com.apple.rapport*",
+    "com.apple.sidecar*",
+    "com.apple.mediacontinuityd",
+    "com.apple.universalcontrol",
+]
