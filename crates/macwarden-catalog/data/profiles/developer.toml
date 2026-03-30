@@ -1,0 +1,22 @@
+[profile]
+name = "developer"
+description = "Extends minimal — re-allows Xcode, USB, simulators, instruments"
+extends = ["minimal"]
+
+[rules]
+deny = []
+allow = [
+    "com.apple.dt.*",
+    "com.apple.instruments*",
+    "com.apple.CoreSimulator*",
+    "com.apple.usbmuxd",
+]
+
+[rules.categories]
+telemetry = "deny"
+core-os = "allow"
+developer = "allow"
+
+[enforcement]
+action = "disable"
+exec_policy = "allow"

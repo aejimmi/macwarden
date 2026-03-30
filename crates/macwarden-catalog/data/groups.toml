@@ -1,0 +1,341 @@
+[[group]]
+name = "spotlight"
+description = "Spotlight search and metadata indexing"
+safety = "optional"
+patterns = [
+    "com.apple.Spotlight",
+    "com.apple.metadata.mds*",
+    "com.apple.corespotlight*",
+    "com.apple.metadata.md*",
+    "com.apple.spotlightknowledge*",
+    "com.apple.managedcorespotlight*",
+]
+disable_commands = ["mdutil -a -i off"]
+enable_commands = ["mdutil -a -i on"]
+
+[[group]]
+name = "siri"
+description = "Siri voice assistant and dictation"
+safety = "recommended"
+patterns = [
+    "com.apple.Siri*",
+    "com.apple.siri*",
+    "com.apple.assistant*",
+    "com.apple.parsec*",
+    "com.apple.DictationIM",
+    "com.apple.SiriTTSTraining*",
+]
+
+[[group]]
+name = "telemetry"
+description = "Apple analytics and reporting — pure phone-home, no local function"
+safety = "recommended"
+patterns = [
+    "com.apple.analyticsd",
+    "com.apple.SubmitDiagInfo",
+    "com.apple.audioanalyticsd",
+    "com.apple.inputanalyticsd",
+    "com.apple.geoanalyticsd",
+    "com.apple.rtcreportingd",
+    "com.apple.osanalytics*",
+    "com.apple.logd_reporter",
+    "com.apple.bosreporter",
+    "com.apple.gkreport",
+    "com.apple.csrutil.report",
+    "com.apple.ReportMemoryException",
+    "com.apple.ReportSystemMemory",
+    "com.apple.pluginkit.pkreporter",
+    "com.apple.DiagnosticsReporter",
+    "com.apple.diagnosticspushd",
+    "com.apple.ap.adprivacyd",
+    "com.apple.ap.promotedcontentd",
+    "com.apple.triald",
+    "com.apple.triald.system",
+]
+
+[[group]]
+name = "crash-reports"
+description = "Mach exception handler — catches crashes, writes .crash files. Without it: no crash logs for your apps"
+safety = "keep"
+patterns = [
+    "com.apple.ReportCrash",
+    "com.apple.ReportCrash.Root",
+    "com.apple.ReportCrash.Self",
+    "com.apple.CrashReporterSupportHelper",
+    "com.apple.CrashReporter*",
+]
+
+[[group]]
+name = "hang-detection"
+description = "Spin/hang sampling — used by Force Quit and Activity Monitor. Killable if you have ps/top"
+safety = "optional"
+patterns = [
+    "com.apple.spindump",
+    "com.apple.spindump_agent",
+    "com.apple.tailspind",
+]
+
+[[group]]
+name = "network-quality"
+description = "WiFi/cellular quality monitoring (Symptoms framework). Disabling may slow WiFi switching"
+safety = "keep"
+patterns = [
+    "com.apple.symptom*",
+]
+
+[[group]]
+name = "system-logging"
+description = "Powers `log show/stream` and Console.app. Most users should keep this"
+safety = "keep"
+patterns = [
+    "com.apple.diagnosticd",
+]
+
+[[group]]
+name = "icloud-sync"
+description = "iCloud feature sync (photos, settings, mail, bookmarks). Safe to kill — local apps still work"
+safety = "optional"
+patterns = [
+    "com.apple.cloudphotod",
+    "com.apple.CloudPhotos*",
+    "com.apple.CloudSettings*",
+    "com.apple.icloudmailagent",
+    "com.apple.cloudpaird",
+    "com.apple.biomesyncd",
+    "com.apple.mediastream*",
+    "com.apple.SafariCloudHistory*",
+    "com.apple.safaridavclient",
+    "com.apple.itunescloudd",
+    "com.apple.iCloudNotification*",
+    "com.apple.iCloudUserNotifications",
+    "com.apple.iCloudStats",
+    "com.apple.mbicloudsetupd",
+]
+
+[[group]]
+name = "cloudkit"
+description = "CloudKit daemon + iCloud Drive. Used by Notes, Reminders, and any CloudKit app. App Store is separate"
+safety = "optional"
+patterns = [
+    "com.apple.cloudd",
+    "com.apple.bird",
+    "com.apple.CloudDocs*",
+]
+
+[[group]]
+name = "keychain-sync"
+description = "iCloud Keychain password sync across devices. Local keychain still works without it"
+safety = "optional"
+patterns = [
+    "com.apple.security.cloudkeychainproxy3",
+    "com.apple.protectedcloudstorage.protectedcloudkeysyncing",
+]
+
+[[group]]
+name = "airdrop"
+description = "AirDrop, Handoff, and nearby sharing"
+safety = "optional"
+patterns = [
+    "com.apple.AirDrop*",
+    "com.apple.rapport*",
+    "com.apple.sharingd",
+    "com.apple.Sharing*",
+]
+
+[[group]]
+name = "gamekit"
+description = "Game Center and game controller services"
+safety = "recommended"
+patterns = [
+    "com.apple.GameController*",
+    "com.apple.gamed",
+    "com.apple.gamepolicyd",
+]
+
+[[group]]
+name = "applemusic"
+description = "Apple Music and iTunes media services"
+safety = "recommended"
+patterns = [
+    "com.apple.amp.*",
+    "com.apple.AMPDevice*",
+    "com.apple.Music*",
+    "com.apple.iTunes*",
+]
+
+[[group]]
+name = "mail"
+description = "Apple Mail"
+safety = "optional"
+patterns = [
+    "com.apple.mail*",
+    "com.apple.Mail*",
+]
+
+[[group]]
+name = "fmf"
+description = "Find My (device and friends location tracking)"
+safety = "recommended"
+patterns = [
+    "com.apple.findmy*",
+    "com.apple.FindMyMac*",
+    "com.apple.icloud.findmydeviced*",
+    "com.apple.findmymacmessenger",
+]
+
+[[group]]
+name = "bluetooth"
+description = "Bluetooth services"
+safety = "keep"
+patterns = [
+    "com.apple.bluetooth*",
+    "com.apple.BTServer*",
+    "com.apple.BluetoothUIService",
+]
+
+[[group]]
+name = "location"
+description = "Location services and geofencing"
+safety = "keep"
+patterns = [
+    "com.apple.locationd",
+    "com.apple.CoreLocationAgent",
+    "com.apple.geod",
+    "com.apple.geodMachServiceBridge",
+    "com.apple.routined",
+    "com.apple.locationaccessstored",
+]
+
+[[group]]
+name = "photos"
+description = "Photo library, analysis, and cloud sync"
+safety = "optional"
+patterns = [
+    "com.apple.photoanalysis*",
+    "com.apple.photolibraryd",
+    "com.apple.cloudphotod",
+    "com.apple.CloudPhotosConfiguration",
+    "com.apple.mediaanalysis*",
+    "com.apple.mediastream*",
+]
+
+[[group]]
+name = "notifications"
+description = "Push and user notification services"
+safety = "keep"
+patterns = [
+    "com.apple.UserNotificationCenter*",
+    "com.apple.usernoted*",
+    "com.apple.aps*",
+    "com.apple.apsd",
+    "com.apple.AOSPushRelay",
+]
+
+[[group]]
+name = "safari"
+description = "Safari browser and WebKit services"
+safety = "optional"
+patterns = [
+    "com.apple.Safari*",
+    "com.apple.SafariBookmarks*",
+    "com.apple.SafariCloudHistory*",
+    "com.apple.SafariNotification*",
+    "com.apple.safaridavclient",
+    "com.apple.WebKit*",
+]
+
+[[group]]
+name = "backup"
+description = "Time Machine and secure backup"
+safety = "optional"
+patterns = [
+    "com.apple.backupd*",
+    "com.apple.TMHelper*",
+    "com.apple.SecureBackupDaemon",
+]
+disable_commands = ["tmutil disable"]
+enable_commands = ["tmutil enable"]
+
+[[group]]
+name = "updates"
+description = "Software update and App Store services"
+safety = "optional"
+patterns = [
+    "com.apple.SoftwareUpdate*",
+    "com.apple.softwareupdate*",
+    "com.apple.mobile.softwareupdated",
+    "com.apple.appstored",
+]
+
+[[group]]
+name = "screentime"
+description = "Screen Time, family controls, and usage tracking"
+safety = "recommended"
+patterns = [
+    "com.apple.ScreenTime*",
+    "com.apple.UsageTracking*",
+    "com.apple.FamilyControls*",
+    "com.apple.familycontrols*",
+    "com.apple.familycircled",
+    "com.apple.familynotificationd",
+    "com.apple.parentalcontrols*",
+]
+
+[[group]]
+name = "maps"
+description = "Apple Maps and navigation services"
+safety = "recommended"
+patterns = [
+    "com.apple.Maps*",
+    "com.apple.maps.*",
+    "com.apple.geod",
+    "com.apple.geodMachServiceBridge",
+    "com.apple.navd",
+]
+
+[[group]]
+name = "apple-intelligence"
+description = "Apple Intelligence and on-device ML"
+safety = "recommended"
+patterns = [
+    "com.apple.generativeexperience*",
+    "com.apple.intelligenceflow*",
+    "com.apple.intelligencecontext*",
+    "com.apple.intelligenceplatform*",
+    "com.apple.knowledgeconstruction*",
+    "com.apple.knowledge-agent",
+    "com.apple.modelmanagerd",
+]
+
+[[group]]
+name = "remote-access"
+description = "Screen sharing and remote desktop"
+safety = "recommended"
+patterns = [
+    "com.apple.screensharing*",
+    "com.apple.RemoteDesktop*",
+    "com.apple.SSInvitation*",
+]
+
+[[group]]
+name = "messages"
+description = "iMessage, FaceTime, and communication services"
+safety = "optional"
+patterns = [
+    "com.apple.imagent",
+    "com.apple.imtransferagent",
+    "com.apple.imautomatichistory*",
+    "com.apple.soagent",
+    "com.apple.identityservicesd",
+    "com.apple.CommCenter*",
+]
+
+[[group]]
+name = "wallet"
+description = "Apple Pay, Wallet, and NFC"
+safety = "recommended"
+patterns = [
+    "com.apple.financed",
+    "com.apple.passd",
+    "com.apple.nfcd",
+]

@@ -1,0 +1,26 @@
+[profile]
+name = "minimal"
+description = "Extends base — kills Siri, Spotlight, Game Center, media agents, AirDrop"
+extends = ["base"]
+
+[rules]
+deny = [
+    "com.apple.Siri.*",
+    "com.apple.assistant*",
+    "com.apple.Spotlight*",
+    "com.apple.metadata.mds*",
+    "com.apple.gamecontrollerd",
+    "com.apple.GameController*",
+    "com.apple.AMPDeviceDiscoveryAgent",
+    "com.apple.AirPlayXPCHelper",
+    "com.apple.sharingd",
+]
+allow = []
+
+[rules.categories]
+telemetry = "deny"
+core-os = "allow"
+
+[enforcement]
+action = "disable"
+exec_policy = "allow"

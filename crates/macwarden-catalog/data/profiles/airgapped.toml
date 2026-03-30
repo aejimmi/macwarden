@@ -1,0 +1,33 @@
+[profile]
+name = "airgapped"
+description = "Kill all networking, Bluetooth, USB, AirDrop, sync"
+extends = ["base"]
+
+[rules]
+deny = [
+    "com.apple.mDNSResponder*",
+    "com.apple.WiFiAgent",
+    "com.apple.wifi.*",
+    "com.apple.bluetoothd",
+    "com.apple.Bluetooth*",
+    "com.apple.airportd",
+    "com.apple.sharingd",
+    "com.apple.AirPlayXPCHelper",
+    "com.apple.icloud*",
+    "com.apple.cloudd",
+    "com.apple.CloudPhotos*",
+    "com.apple.bird",
+    "com.apple.nsurlsessiond",
+    "com.apple.usbmuxd",
+]
+allow = []
+
+[rules.categories]
+networking = "deny"
+cloud = "deny"
+telemetry = "deny"
+core-os = "allow"
+
+[enforcement]
+action = "kill"
+exec_policy = "deny"

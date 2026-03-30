@@ -1,0 +1,36 @@
+[package]
+name = "macwarden"
+description = "A profile-based daemon firewall for macOS"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "macwarden"
+path = "src/main.rs"
+
+[dependencies]
+macwarden-core = { workspace = true }
+macwarden-catalog = { workspace = true }
+macwarden-launchd = { workspace = true }
+macwarden-snapshot = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+plist = { workspace = true }
+tabled = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+libc = { workspace = true }
+notify = { workspace = true }
+signal-hook = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = { workspace = true }
+predicates = { workspace = true }
+tempfile = { workspace = true }

@@ -1,0 +1,27 @@
+[profile]
+name = "studio"
+description = "Kill indexing, sync, updates — prevent audio glitches"
+extends = ["base"]
+
+[rules]
+deny = [
+    "com.apple.metadata.mds*",
+    "com.apple.Spotlight*",
+    "com.apple.softwareupdated",
+    "com.apple.SoftwareUpdate*",
+    "com.apple.icloud*",
+    "com.apple.cloudd",
+    "com.apple.TimeMachine*",
+    "com.apple.backupd*",
+]
+allow = []
+
+[rules.categories]
+telemetry = "deny"
+cloud = "deny"
+core-os = "allow"
+media = "allow"
+
+[enforcement]
+action = "disable"
+exec_policy = "allow"
