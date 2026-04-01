@@ -1,0 +1,8 @@
+[group]
+name = "widgets"
+description = "iPhone/Mac widget sync daemon. Listens on a random UDP port. Unnecessary if you don't use iPhone widgets on Mac"
+safety = "recommended"
+patterns = [
+    "com.apple.replicatord",
+    "com.apple.chronod",
+]

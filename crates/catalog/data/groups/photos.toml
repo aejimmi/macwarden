@@ -1,0 +1,11 @@
+[group]
+name = "photos"
+description = "Photo library management and iCloud photo sync. Disabling breaks Photos.app and cloud sync"
+safety = "optional"
+respawn_behavior = "respawns-aggressive"
+patterns = [
+    "com.apple.photolibraryd",
+    "com.apple.cloudphotod",
+    "com.apple.CloudPhotosConfiguration",
+    "com.apple.mediastream*",
+]

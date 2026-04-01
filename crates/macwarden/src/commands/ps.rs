@@ -6,9 +6,9 @@ use anyhow::{Context, Result};
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
 
-use macwarden_catalog::load_builtin_groups;
-use macwarden_core::{ServiceGroup, find_groups_for_service};
-use macwarden_launchd::{MacOsPlatform, Platform};
+use catalog::load_builtin_groups;
+use launchd::{MacOsPlatform, Platform};
+use policy::{ServiceGroup, find_groups_for_service};
 
 use crate::cli::OutputFormat;
 

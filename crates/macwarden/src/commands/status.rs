@@ -2,10 +2,10 @@
 
 use anyhow::{Context, Result};
 
-use macwarden_catalog::load_builtin_groups;
-use macwarden_core::{ServiceState, resolve_group_services};
-use macwarden_launchd::{MacOsPlatform, Platform};
-use macwarden_snapshot::SnapshotStore;
+use catalog::load_builtin_groups;
+use launchd::{MacOsPlatform, Platform};
+use policy::{ServiceState, resolve_group_services};
+use snapshot::SnapshotStore;
 
 use crate::cli::{self, OutputFormat};
 use crate::commands::enforce;

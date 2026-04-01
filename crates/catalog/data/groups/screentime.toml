@@ -1,0 +1,14 @@
+[group]
+name = "screentime"
+description = "Screen Time, family controls, and usage tracking"
+safety = "recommended"
+respawn_behavior = "respawns-aggressive"
+patterns = [
+    "com.apple.ScreenTime*",
+    "com.apple.UsageTracking*",
+    "com.apple.FamilyControls*",
+    "com.apple.familycontrols*",
+    "com.apple.familycircled",
+    "com.apple.familynotificationd",
+    "com.apple.parentalcontrols*",
+]

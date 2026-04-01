@@ -1,0 +1,9 @@
+[group]
+name = "airplay"
+description = "AirPlay receiver — listens on ports 7000 (video) and 5000 (audio). Open to anyone on your LAN"
+safety = "optional"
+patterns = [
+    "com.apple.controlcenter",
+    "com.apple.AirPlayXPCHelper",
+    "com.apple.AirPlayUIAgent",
+]

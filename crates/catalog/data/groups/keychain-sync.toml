@@ -1,0 +1,8 @@
+[group]
+name = "keychain-sync"
+description = "iCloud Keychain password sync across devices. Local keychain still works without it"
+safety = "optional"
+patterns = [
+    "com.apple.security.cloudkeychainproxy3",
+    "com.apple.protectedcloudstorage.protectedcloudkeysyncing",
+]

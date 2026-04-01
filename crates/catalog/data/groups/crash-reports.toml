@@ -1,0 +1,12 @@
+[group]
+name = "crash-reports"
+description = "Mach exception handler — catches crashes, writes .crash files. Without it: no crash logs for your apps"
+safety = "keep"
+patterns = [
+    "com.apple.ReportCrash",
+    "com.apple.ReportCrash.Root",
+    "com.apple.ReportCrash.Self",
+    "com.apple.CrashReporterSupportHelper",
+    "com.apple.CrashReporter*",
+]
+cleanup_commands = ["rm -rf ~/Library/Logs/DiagnosticReports"]

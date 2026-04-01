@@ -6,8 +6,8 @@
 
 use anyhow::Result;
 
-use macwarden_core::{ServiceCategory, ServiceInfo};
-use macwarden_launchd::{binary_frameworks, binary_telemetry_scan};
+use launchd::{binary_frameworks, binary_telemetry_scan};
+use policy::{ServiceCategory, ServiceInfo};
 
 use crate::commands::scan::discover_services;
 
@@ -114,7 +114,7 @@ pub fn run(label: Option<&str>) -> Result<()> {
 
         let (frameworks, scan) = match &binary {
             Some(bin) => (binary_frameworks(bin), binary_telemetry_scan(bin)),
-            None => (vec![], macwarden_launchd::TelemetryScan::default()),
+            None => (vec![], launchd::TelemetryScan::default()),
         };
 
         let inferred_cat = infer_from_frameworks(&frameworks);

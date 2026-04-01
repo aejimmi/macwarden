@@ -1,0 +1,10 @@
+[group]
+name = "cloudkit"
+description = "CloudKit daemon + iCloud Drive. Used by Notes, Reminders, and any CloudKit app. App Store is separate"
+safety = "optional"
+respawn_behavior = "respawns-launchd"
+patterns = [
+    "com.apple.cloudd",
+    "com.apple.bird",
+    "com.apple.CloudDocs*",
+]

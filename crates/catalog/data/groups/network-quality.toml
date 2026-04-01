@@ -1,0 +1,7 @@
+[group]
+name = "network-quality"
+description = "WiFi/cellular quality monitoring (Symptoms framework). Disabling may slow WiFi switching"
+safety = "keep"
+patterns = [
+    "com.apple.symptom*",
+]

@@ -132,6 +132,18 @@ enum Commands {
         uninstall: bool,
     },
 
+    /// Delete data artifacts left by disabled services.
+    ///
+    /// Removes Spotlight indexes, behavioral databases, ML caches,
+    /// diagnostic logs, and other traces a group's services wrote to disk.
+    Scrub {
+        /// Group name to scrub data for.
+        target: String,
+        /// Print actions without executing.
+        #[arg(short = 'n', long)]
+        dry_run: bool,
+    },
+
     /// Revert the last enforcement action.
     Undo {
         /// Snapshot name (reverts latest if omitted).
@@ -149,6 +161,20 @@ enum Commands {
         /// Show all connections including LISTEN and local UDP.
         #[arg(short, long)]
         all: bool,
+    },
+
+    /// Show what has access to your camera and microphone.
+    ///
+    /// Reads the macOS TCC database to find authorized apps, then
+    /// cross-references with running processes and macwarden groups.
+    /// Use --revoke to remove a stale or unwanted authorization.
+    Devices {
+        /// Output format.
+        #[arg(short, long, default_value = "table")]
+        format: OutputFormat,
+        /// Revoke camera and microphone access for an app (bundle ID).
+        #[arg(long)]
+        revoke: Option<String>,
     },
 }
 
@@ -211,7 +237,7 @@ pub fn expand_home(path: &str) -> Result<PathBuf> {
 
 /// Build the list of plist directories with `~` expanded.
 pub fn plist_dirs() -> Result<Vec<PathBuf>> {
-    macwarden_catalog::DEFAULT_PLIST_DIRS
+    catalog::DEFAULT_PLIST_DIRS
         .iter()
         .map(|p| expand_home(p))
         .collect()
@@ -284,6 +310,8 @@ pub fn run() -> Result<()> {
 
         Some(Commands::Allow { target, dry_run }) => commands::enable::run(&target, dry_run),
 
+        Some(Commands::Scrub { target, dry_run }) => commands::scrub::run(&target, dry_run),
+
         Some(Commands::Watch {
             profile,
             install,
@@ -301,6 +329,11 @@ pub fn run() -> Result<()> {
         Some(Commands::Undo { name, dry_run }) => commands::rollback::run(name.as_deref(), dry_run),
 
         Some(Commands::Network { format, all }) => commands::network::run(format, all),
+
+        Some(Commands::Devices { format, revoke }) => match revoke {
+            Some(bundle_id) => commands::devices::revoke(&bundle_id),
+            None => commands::devices::run(format),
+        },
     }
 }
 

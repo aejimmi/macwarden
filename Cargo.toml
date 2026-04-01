@@ -1,10 +1,11 @@
 [workspace]
 members = [
     "crates/macwarden",
-    "crates/macwarden-core",
-    "crates/macwarden-catalog",
-    "crates/macwarden-launchd",
-    "crates/macwarden-snapshot",
+    "crates/policy",
+    "crates/catalog",
+    "crates/launchd",
+    "crates/snapshot",
+    "crates/sensors",
 ]
 resolver = "2"
 
@@ -49,10 +50,11 @@ unsafe_code = "warn"
 
 [workspace.dependencies]
 # Internal crates
-macwarden-core = { path = "crates/macwarden-core" }
-macwarden-catalog = { path = "crates/macwarden-catalog" }
-macwarden-launchd = { path = "crates/macwarden-launchd" }
-macwarden-snapshot = { path = "crates/macwarden-snapshot" }
+policy = { path = "crates/policy" }
+catalog = { path = "crates/catalog" }
+launchd = { path = "crates/launchd" }
+snapshot = { path = "crates/snapshot" }
+sensors = { path = "crates/sensors" }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

@@ -4,8 +4,8 @@ use anyhow::Result;
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
 
-use macwarden_catalog::load_builtin_groups;
-use macwarden_core::{Safety, ServiceState, resolve_group_services};
+use catalog::load_builtin_groups;
+use policy::{Safety, ServiceState, resolve_group_services};
 
 use crate::cli::{GroupSort, SafetyFilter};
 use crate::commands::scan::discover_services;

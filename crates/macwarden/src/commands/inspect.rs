@@ -5,13 +5,11 @@
 
 use anyhow::{Context, Result};
 
-use macwarden_catalog::{load_builtin_groups, load_builtin_profiles};
-use macwarden_core::{
+use catalog::{load_builtin_groups, load_builtin_profiles};
+use launchd::{MacOsPlatform, Platform, ServiceDetail, binary_frameworks, binary_telemetry_scan};
+use policy::{
     ServiceInfo, decide, diff, find_group, find_groups_for_service, resolve_extends,
     resolve_group_services,
-};
-use macwarden_launchd::{
-    MacOsPlatform, Platform, ServiceDetail, binary_frameworks, binary_telemetry_scan,
 };
 
 use crate::cli::{self, OutputFormat};
@@ -51,8 +49,8 @@ pub fn run(target: &str, format: OutputFormat) -> Result<()> {
 
 /// Display profile information: rules, what it would do, dry-run preview.
 fn inspect_profile(
-    profile: &macwarden_core::Profile,
-    all_profiles: &[macwarden_core::Profile],
+    profile: &policy::Profile,
+    all_profiles: &[policy::Profile],
     format: OutputFormat,
 ) -> Result<()> {
     let resolved = resolve_extends(profile, all_profiles).context(format!(
@@ -72,10 +70,10 @@ fn inspect_profile(
 
 /// Print profile details as a human-readable summary.
 fn print_profile_table(
-    profile: &macwarden_core::Profile,
-    resolved: &macwarden_core::Profile,
+    profile: &policy::Profile,
+    resolved: &policy::Profile,
     services: &[ServiceInfo],
-    actions: &[(ServiceInfo, macwarden_core::Action)],
+    actions: &[(ServiceInfo, policy::Action)],
 ) {
     let active = cli::read_active_profile().unwrap_or_default();
     let is_active = active == profile.profile.name;
@@ -115,7 +113,7 @@ fn print_profile_table(
     } else {
         let disable_count = actions
             .iter()
-            .filter(|(_, a)| matches!(a, macwarden_core::Action::Disable { .. }))
+            .filter(|(_, a)| matches!(a, policy::Action::Disable { .. }))
             .count();
         println!(
             "\nWould block {} of {} services:",
@@ -124,8 +122,7 @@ fn print_profile_table(
         );
         let mut seen = std::collections::HashSet::new();
         for (svc, action) in actions {
-            if matches!(action, macwarden_core::Action::Disable { .. }) && seen.insert(&svc.label)
-            {
+            if matches!(action, policy::Action::Disable { .. }) && seen.insert(&svc.label) {
                 println!(
                     "  {} [{}] (category: {}, safety: {})",
                     svc.label, svc.state, svc.category, svc.safety,
@@ -137,8 +134,8 @@ fn print_profile_table(
 
 /// Print profile details as JSON.
 fn print_profile_json(
-    profile: &macwarden_core::Profile,
-    actions: &[(ServiceInfo, macwarden_core::Action)],
+    profile: &policy::Profile,
+    actions: &[(ServiceInfo, policy::Action)],
 ) -> Result<()> {
     #[derive(serde::Serialize)]
     struct ProfileReport<'a> {
@@ -152,7 +149,7 @@ fn print_profile_json(
 
     let would_block: Vec<&str> = actions
         .iter()
-        .filter(|(_, a)| matches!(a, macwarden_core::Action::Disable { .. }))
+        .filter(|(_, a)| matches!(a, policy::Action::Disable { .. }))
         .map(|(svc, _)| svc.label.as_str())
         .collect();
 
@@ -175,7 +172,7 @@ fn print_profile_json(
 // ---------------------------------------------------------------------------
 
 /// Display group information: description, patterns, matching services.
-fn inspect_group(group: &macwarden_core::ServiceGroup, format: OutputFormat) -> Result<()> {
+fn inspect_group(group: &policy::ServiceGroup, format: OutputFormat) -> Result<()> {
     let services = discover_services()?;
     let matched = resolve_group_services(group, &services);
 
@@ -187,11 +184,14 @@ fn inspect_group(group: &macwarden_core::ServiceGroup, format: OutputFormat) -> 
 }
 
 /// Print group details as a human-readable table.
-fn print_group_table(group: &macwarden_core::ServiceGroup, services: &[&ServiceInfo]) {
+fn print_group_table(group: &policy::ServiceGroup, services: &[&ServiceInfo]) {
     println!("Group: {}", group.name);
     println!("  {}\n", group.description);
 
-    println!("Patterns:");
+    println!("  Safety:   {}", group.safety);
+    println!("  Respawn:  {}", group.respawn_behavior);
+
+    println!("\nPatterns:");
     for pat in &group.patterns {
         println!("  {pat}");
     }
@@ -208,6 +208,18 @@ fn print_group_table(group: &macwarden_core::ServiceGroup, services: &[&ServiceI
             println!("  {cmd}");
         }
     }
+    if !group.cleanup_commands.is_empty() {
+        println!("\nCleanup commands (reclaim disk space after disabling):");
+        for cmd in &group.cleanup_commands {
+            println!("  {cmd}");
+        }
+    }
+
+    if group.respawn_behavior == policy::RespawnBehavior::RespawnsAggressive {
+        println!(
+            "\nNote: This group respawns aggressively. Use `macwarden watch` to keep it disabled."
+        );
+    }
 
     println!("\nMatching services ({}):", services.len());
     for svc in services {
@@ -217,26 +229,27 @@ fn print_group_table(group: &macwarden_core::ServiceGroup, services: &[&ServiceI
 }
 
 /// Print group details as JSON.
-fn print_group_json(
-    group: &macwarden_core::ServiceGroup,
-    services: &[&ServiceInfo],
-) -> Result<()> {
+fn print_group_json(group: &policy::ServiceGroup, services: &[&ServiceInfo]) -> Result<()> {
     #[derive(serde::Serialize)]
     struct GroupReport<'a> {
         name: &'a str,
         description: &'a str,
+        respawn_behavior: String,
         patterns: &'a [String],
         disable_commands: &'a [String],
         enable_commands: &'a [String],
+        cleanup_commands: &'a [String],
         matching_services: Vec<&'a ServiceInfo>,
     }
 
     let report = GroupReport {
         name: &group.name,
         description: &group.description,
+        respawn_behavior: group.respawn_behavior.to_string(),
         patterns: &group.patterns,
         disable_commands: &group.disable_commands,
         enable_commands: &group.enable_commands,
+        cleanup_commands: &group.cleanup_commands,
         matching_services: services.to_vec(),
     };
 
@@ -253,7 +266,7 @@ fn print_group_json(
 fn inspect_service(
     label: &str,
     format: OutputFormat,
-    all_groups: &[macwarden_core::ServiceGroup],
+    all_groups: &[policy::ServiceGroup],
 ) -> Result<()> {
     let services = discover_services()?;
     let svc = services.iter().find(|s| s.label == label);
@@ -282,8 +295,8 @@ fn inspect_service(
 fn print_service_table(
     svc: &ServiceInfo,
     detail: Option<&ServiceDetail>,
-    process: Option<&macwarden_launchd::ProcessDetail>,
-    groups: &[&macwarden_core::ServiceGroup],
+    process: Option<&launchd::ProcessDetail>,
+    groups: &[&policy::ServiceGroup],
 ) {
     println!("Service: {}", svc.label);
     println!("  Domain:    {}", svc.domain);
@@ -374,14 +387,14 @@ fn print_service_table(
 fn print_service_json(
     svc: &ServiceInfo,
     detail: Option<&ServiceDetail>,
-    process: Option<&macwarden_launchd::ProcessDetail>,
-    groups: &[&macwarden_core::ServiceGroup],
+    process: Option<&launchd::ProcessDetail>,
+    groups: &[&policy::ServiceGroup],
 ) -> Result<()> {
     #[derive(serde::Serialize)]
     struct ServiceReport<'a> {
         service: &'a ServiceInfo,
         detail: Option<&'a ServiceDetail>,
-        process: Option<&'a macwarden_launchd::ProcessDetail>,
+        process: Option<&'a launchd::ProcessDetail>,
         groups: Vec<&'a str>,
     }
 
@@ -404,8 +417,8 @@ fn print_service_json(
 /// Map a core `Domain` to the launchctl domain string.
 fn domain_string(svc: &ServiceInfo) -> String {
     match svc.domain {
-        macwarden_core::Domain::System => "system".to_owned(),
-        macwarden_core::Domain::User | macwarden_core::Domain::Global => {
+        policy::Domain::System => "system".to_owned(),
+        policy::Domain::User | policy::Domain::Global => {
             // Best-effort: use uid from env if available
             let uid = std::env::var("UID")
                 .or_else(|_| std::env::var("EUID"))

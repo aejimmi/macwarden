@@ -2,9 +2,9 @@
 
 use anyhow::{Context, Result};
 
-use macwarden_catalog::load_builtin_groups;
-use macwarden_core::{ServiceGroup, ServiceInfo, find_group, resolve_group_services};
-use macwarden_launchd::MacOsPlatform;
+use catalog::load_builtin_groups;
+use launchd::MacOsPlatform;
+use policy::{ServiceGroup, ServiceInfo, find_group, resolve_group_services};
 
 use super::enforce;
 use crate::commands::scan::discover_services;

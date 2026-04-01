@@ -1,0 +1,9 @@
+[group]
+name = "gamekit"
+description = "Game Center and game controller services"
+safety = "recommended"
+patterns = [
+    "com.apple.GameController*",
+    "com.apple.gamed",
+    "com.apple.gamepolicyd",
+]

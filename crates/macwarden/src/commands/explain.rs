@@ -2,8 +2,8 @@
 
 use anyhow::{Context, Result};
 
-use macwarden_catalog::load_builtin_profiles;
-use macwarden_core::{explain, resolve_extends};
+use catalog::load_builtin_profiles;
+use policy::{explain, resolve_extends};
 
 use crate::cli;
 use crate::commands::scan::discover_services;

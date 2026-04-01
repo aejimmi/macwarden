@@ -1,0 +1,11 @@
+[group]
+name = "maps"
+description = "Apple Maps and navigation services"
+safety = "recommended"
+patterns = [
+    "com.apple.Maps*",
+    "com.apple.maps.*",
+    "com.apple.geod",
+    "com.apple.geodMachServiceBridge",
+    "com.apple.navd",
+]

@@ -1,0 +1,28 @@
+[group]
+name = "telemetry"
+description = "Apple analytics and reporting — pure phone-home, no local function"
+safety = "recommended"
+respawn_behavior = "respawns-launchd"
+patterns = [
+    "com.apple.analyticsd",
+    "com.apple.SubmitDiagInfo",
+    "com.apple.audioanalyticsd",
+    "com.apple.inputanalyticsd",
+    "com.apple.geoanalyticsd",
+    "com.apple.rtcreportingd",
+    "com.apple.osanalytics*",
+    "com.apple.logd_reporter",
+    "com.apple.bosreporter",
+    "com.apple.gkreport",
+    "com.apple.csrutil.report",
+    "com.apple.ReportMemoryException",
+    "com.apple.ReportSystemMemory",
+    "com.apple.pluginkit.pkreporter",
+    "com.apple.DiagnosticsReporter",
+    "com.apple.diagnosticspushd",
+    "com.apple.ap.adprivacyd",
+    "com.apple.ap.promotedcontentd",
+    "com.apple.triald",
+    "com.apple.triald.system",
+]
+cleanup_commands = ["log erase --all"]

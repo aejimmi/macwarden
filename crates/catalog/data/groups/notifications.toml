@@ -1,0 +1,11 @@
+[group]
+name = "notifications"
+description = "Push and user notification services"
+safety = "keep"
+patterns = [
+    "com.apple.UserNotificationCenter*",
+    "com.apple.usernoted*",
+    "com.apple.aps*",
+    "com.apple.apsd",
+    "com.apple.AOSPushRelay",
+]

@@ -1,0 +1,21 @@
+[group]
+name = "icloud-sync"
+description = "iCloud feature sync (photos, settings, mail, bookmarks). Safe to kill — local apps still work"
+safety = "optional"
+respawn_behavior = "respawns-launchd"
+patterns = [
+    "com.apple.cloudphotod",
+    "com.apple.CloudPhotos*",
+    "com.apple.CloudSettings*",
+    "com.apple.icloudmailagent",
+    "com.apple.cloudpaird",
+    "com.apple.biomesyncd",
+    "com.apple.mediastream*",
+    "com.apple.SafariCloudHistory*",
+    "com.apple.safaridavclient",
+    "com.apple.itunescloudd",
+    "com.apple.iCloudNotification*",
+    "com.apple.iCloudUserNotifications",
+    "com.apple.iCloudStats",
+    "com.apple.mbicloudsetupd",
+]

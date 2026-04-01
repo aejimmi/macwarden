@@ -4,9 +4,9 @@ use std::collections::HashSet;
 
 use anyhow::{Context, Result};
 
-use macwarden_catalog::load_builtin_profiles;
-use macwarden_core::{Action, diff, resolve_extends, validate_actions, validate_profile};
-use macwarden_launchd::MacOsPlatform;
+use catalog::{load_builtin_groups, load_builtin_profiles};
+use launchd::MacOsPlatform;
+use policy::{Action, diff, resolve_extends, validate_actions, validate_profile};
 
 use super::enforce;
 use crate::commands::scan::discover_services;
@@ -83,6 +83,9 @@ pub fn run(profile_name: &str, dry_run: bool) -> Result<()> {
         if let Err(e) = enforce::save_active_profile(profile_name) {
             eprintln!("warning: {e}");
         }
+        let groups = load_builtin_groups();
+        let respawning = enforce::collect_respawning_labels(&to_disable, &groups);
+        enforce::warn_respawning(&respawning);
         println!("\nDone. Profile '{profile_name}' applied.");
         println!("Services marked disabled won't restart after reboot.");
         println!("SIP-protected processes may keep running until then.");

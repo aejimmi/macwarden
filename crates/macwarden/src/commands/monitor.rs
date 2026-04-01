@@ -4,6 +4,11 @@
 //! sweep. When drift is detected (a denied service respawned or a new plist
 //! appeared), re-enforces the active profile.
 //!
+//! Monitors camera and microphone hardware via the `sensors` crate. When a
+//! hardware activation is detected, an immediate enforcement sweep runs —
+//! catching denied services that access the mic/camera within milliseconds
+//! instead of waiting for the 60-second sweep.
+//!
 //! Synchronous design: `notify` crate delivers FSEvents on a background thread
 //! into a `std::sync::mpsc` channel. The main thread does `recv_timeout(60s)`,
 //! which doubles as the periodic sweep timer. `signal-hook` handles SIGTERM
@@ -22,11 +27,9 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result};
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 
-use macwarden_catalog::load_builtin_profiles;
-use macwarden_core::{
-    Action, Profile, ServiceInfo, diff, is_critical, resolve_extends, validate_profile,
-};
-use macwarden_launchd::{MacOsPlatform, Platform};
+use catalog::load_builtin_profiles;
+use launchd::{MacOsPlatform, Platform};
+use policy::{Action, Profile, ServiceInfo, diff, is_critical, resolve_extends, validate_profile};
 
 use super::enforce;
 use crate::cli;
@@ -44,6 +47,18 @@ const DEBOUNCE_WINDOW: Duration = Duration::from_secs(10);
 
 /// Sentinel value sent through the channel when the active-profile file changes.
 const PROFILE_RELOAD_SENTINEL: &str = "__profile_reload__";
+
+/// Sentinel value sent when a microphone activation is detected.
+const SENSOR_MIC_ON: &str = "__sensor_mic_on__";
+
+/// Sentinel value sent when a microphone deactivation is detected.
+const SENSOR_MIC_OFF: &str = "__sensor_mic_off__";
+
+/// Sentinel value sent when a camera activation is detected.
+const SENSOR_CAM_ON: &str = "__sensor_cam_on__";
+
+/// Sentinel value sent when a camera deactivation is detected.
+const SENSOR_CAM_OFF: &str = "__sensor_cam_off__";
 
 // ---------------------------------------------------------------------------
 // Command
@@ -87,6 +102,9 @@ pub fn run(profile_override: Option<&str>) -> Result<()> {
     let (tx, rx) = mpsc::channel();
     let _watcher = start_watcher(tx.clone(), allow_reload)?;
 
+    // Start hardware sensor monitoring.
+    let _sensor_guards = start_sensors(tx.clone());
+
     println!("Watching for drift (Ctrl+C to stop)...\n");
 
     let mut debounce: HashMap<String, Instant> = HashMap::new();
@@ -114,6 +132,12 @@ pub fn run(profile_override: Option<&str>) -> Result<()> {
                             stats.event_enforcements += count;
                         }
                     }
+                    continue;
+                }
+
+                // Check for sensor events.
+                if labels.iter().any(|l| is_sensor_sentinel(l)) {
+                    handle_sensor_events(&labels, &resolved, &platform, &mut stats)?;
                     continue;
                 }
 
@@ -160,11 +184,13 @@ pub fn run(profile_override: Option<&str>) -> Result<()> {
 
     println!("\nShutting down.");
     println!(
-        "  Sweeps: {}, drift corrections: {} (sweep: {}, event: {}), profile reloads: {}",
+        "  Sweeps: {}, drift corrections: {} (sweep: {}, event: {}, sensor: {}), \
+         profile reloads: {}",
         stats.sweeps,
-        stats.sweep_enforcements + stats.event_enforcements,
+        stats.sweep_enforcements + stats.event_enforcements + stats.sensor_enforcements,
         stats.sweep_enforcements,
         stats.event_enforcements,
+        stats.sensor_enforcements,
         stats.profile_reloads,
     );
 
@@ -217,7 +243,9 @@ fn try_reload_profile(
 
     match resolve_profile(&new_name, builtins) {
         Ok(resolved) => {
-            println!("\n  [reload] profile changed: {current_name} → {new_name}. Re-sweeping...\n");
+            println!(
+                "\n  [reload] profile changed: {current_name} → {new_name}. Re-sweeping...\n"
+            );
             Ok(Some((new_name, resolved)))
         }
         Err(e) => {
@@ -287,6 +315,121 @@ fn enforce_sweep(
     }
 
     Ok(count)
+}
+
+// ---------------------------------------------------------------------------
+// Hardware sensor monitoring
+// ---------------------------------------------------------------------------
+
+/// Sensor monitor guards — kept alive for the duration of the watch session.
+/// Dropped on shutdown, which cleanly removes the hardware listeners.
+struct SensorGuards {
+    _mic: Option<sensors::microphone::MicMonitor>,
+    _cam: Option<sensors::camera::CameraMonitor>,
+}
+
+/// Start camera and microphone hardware monitoring.
+///
+/// Events are forwarded into the main channel as sentinel strings so the
+/// existing `recv_timeout` loop can handle them alongside FSEvents.
+fn start_sensors(tx: mpsc::Sender<Vec<String>>) -> SensorGuards {
+    let (sensor_tx, sensor_rx) = mpsc::channel();
+
+    // Forward sensor events to the main channel as sentinels.
+    let main_tx = tx;
+    std::thread::Builder::new()
+        .name("sensor-fwd".into())
+        .spawn(move || {
+            for event in sensor_rx {
+                let sentinel = match event {
+                    sensors::SensorEvent::MicrophoneActivated => SENSOR_MIC_ON,
+                    sensors::SensorEvent::MicrophoneDeactivated => SENSOR_MIC_OFF,
+                    sensors::SensorEvent::CameraActivated => SENSOR_CAM_ON,
+                    sensors::SensorEvent::CameraDeactivated => SENSOR_CAM_OFF,
+                };
+                if main_tx.send(vec![sentinel.to_owned()]).is_err() {
+                    break;
+                }
+            }
+        })
+        .ok();
+
+    // Start microphone monitor (CoreAudio — instant callbacks).
+    let mic = match sensors::microphone::MicMonitor::start(sensor_tx.clone()) {
+        Ok(m) => {
+            println!("  Microphone monitoring: active (CoreAudio)");
+            Some(m)
+        }
+        Err(e) => {
+            tracing::debug!(error = %e, "microphone monitoring unavailable");
+            None
+        }
+    };
+
+    // Start camera monitor (ioreg polling — 2s interval).
+    let cam = match sensors::camera::CameraMonitor::start(sensor_tx) {
+        Ok(c) => {
+            println!("  Camera monitoring: active (polling)");
+            Some(c)
+        }
+        Err(e) => {
+            tracing::debug!(error = %e, "camera monitoring unavailable");
+            None
+        }
+    };
+
+    SensorGuards {
+        _mic: mic,
+        _cam: cam,
+    }
+}
+
+/// Check if a label string is a sensor sentinel.
+fn is_sensor_sentinel(label: &str) -> bool {
+    matches!(
+        label,
+        SENSOR_MIC_ON | SENSOR_MIC_OFF | SENSOR_CAM_ON | SENSOR_CAM_OFF
+    )
+}
+
+/// Handle sensor events: log the hardware change and run an immediate
+/// enforcement sweep to catch denied services that triggered the access.
+fn handle_sensor_events(
+    labels: &[String],
+    profile: &Profile,
+    platform: &dyn Platform,
+    stats: &mut MonitorStats,
+) -> Result<()> {
+    for label in labels {
+        match label.as_str() {
+            SENSOR_MIC_ON => {
+                println!("  [mic] activated — running enforcement sweep");
+                let count = enforce_sweep(profile, platform, stats)?;
+                if count > 0 {
+                    stats.sensor_enforcements += count;
+                } else {
+                    println!("  [mic] all running services are allowed by profile");
+                }
+            }
+            SENSOR_MIC_OFF => {
+                println!("  [mic] deactivated");
+            }
+            SENSOR_CAM_ON => {
+                println!("  [camera] activated — running enforcement sweep");
+                let count = enforce_sweep(profile, platform, stats)?;
+                if count > 0 {
+                    stats.sensor_enforcements += count;
+                } else {
+                    println!("  [camera] all running services are allowed by profile");
+                }
+            }
+            SENSOR_CAM_OFF => {
+                println!("  [camera] deactivated");
+            }
+            _ => {}
+        }
+    }
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -375,6 +518,8 @@ struct MonitorStats {
     sweep_enforcements: usize,
     /// Enforcements triggered by FSEvents.
     event_enforcements: usize,
+    /// Enforcements triggered by hardware sensor events.
+    sensor_enforcements: usize,
     /// Number of profile reloads.
     profile_reloads: usize,
     /// Whether a snapshot has been written this session.

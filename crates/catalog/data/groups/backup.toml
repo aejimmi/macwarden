@@ -1,0 +1,11 @@
+[group]
+name = "backup"
+description = "Time Machine and secure backup"
+safety = "optional"
+patterns = [
+    "com.apple.backupd*",
+    "com.apple.TMHelper*",
+    "com.apple.SecureBackupDaemon",
+]
+disable_commands = ["tmutil disable"]
+enable_commands = ["tmutil enable"]

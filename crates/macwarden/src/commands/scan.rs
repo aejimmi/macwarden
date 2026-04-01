@@ -4,9 +4,9 @@ use anyhow::{Context, Result};
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
 
-use macwarden_catalog::{AnnotationDb, annotate_services, discover_plists};
-use macwarden_core::{ServiceCategory, ServiceInfo, ServiceState};
-use macwarden_launchd::{MacOsPlatform, Platform};
+use catalog::{AnnotationDb, annotate_services, discover_plists};
+use launchd::{MacOsPlatform, Platform};
+use policy::{ServiceCategory, ServiceInfo, ServiceState};
 
 use crate::cli::{self, OutputFormat};
 
@@ -44,11 +44,11 @@ pub fn run(category: Option<&str>, unknown_only: bool, format: OutputFormat) -> 
 
     let running = filtered
         .iter()
-        .filter(|s| s.state == macwarden_core::ServiceState::Running)
+        .filter(|s| s.state == policy::ServiceState::Running)
         .count();
     let disabled = filtered
         .iter()
-        .filter(|s| s.state == macwarden_core::ServiceState::Disabled)
+        .filter(|s| s.state == policy::ServiceState::Disabled)
         .count();
 
     match format {
@@ -95,12 +95,11 @@ pub fn discover_services() -> Result<Vec<ServiceInfo>> {
                     };
                     services.push(ServiceInfo {
                         label: entry.label.clone(),
-                        domain: macwarden_core::Domain::System,
+                        domain: policy::Domain::System,
                         plist_path: None,
                         state,
                         category: annotation.map_or(ServiceCategory::Unknown, |a| a.category),
-                        safety: annotation
-                            .map_or(macwarden_core::SafetyLevel::Optional, |a| a.safety),
+                        safety: annotation.map_or(policy::SafetyLevel::Optional, |a| a.safety),
                         description: annotation.map(|a| a.description.clone()),
                         pid: entry.pid,
                     });

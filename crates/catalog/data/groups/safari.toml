@@ -1,0 +1,12 @@
+[group]
+name = "safari"
+description = "Safari browser and WebKit services"
+safety = "optional"
+patterns = [
+    "com.apple.Safari*",
+    "com.apple.SafariBookmarks*",
+    "com.apple.SafariCloudHistory*",
+    "com.apple.SafariNotification*",
+    "com.apple.safaridavclient",
+    "com.apple.WebKit*",
+]

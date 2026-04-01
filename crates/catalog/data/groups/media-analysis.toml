@@ -1,0 +1,10 @@
+[group]
+name = "media-analysis"
+description = "On-device ML for photos and media — face recognition, object detection, Visual Look Up, Live Text. The #1 CPU hog on macOS. No network activity; disabling only loses AI-powered features"
+safety = "recommended"
+respawn_behavior = "respawns-aggressive"
+patterns = [
+    "com.apple.mediaanalysis*",
+    "com.apple.photoanalysis*",
+]
+cleanup_commands = ["rm -rf ~/Library/Containers/com.apple.mediaanalysisd/Data/Library/Caches", "rm -rf ~/Library/Containers/com.apple.photoanalysisd/Data/Library/Caches"]

@@ -1,0 +1,9 @@
+[group]
+name = "wallet"
+description = "Apple Pay, Wallet, and NFC"
+safety = "recommended"
+patterns = [
+    "com.apple.financed",
+    "com.apple.passd",
+    "com.apple.nfcd",
+]

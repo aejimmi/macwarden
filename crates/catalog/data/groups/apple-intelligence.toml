@@ -1,0 +1,14 @@
+[group]
+name = "apple-intelligence"
+description = "Apple Intelligence and on-device ML"
+safety = "recommended"
+respawn_behavior = "respawns-aggressive"
+patterns = [
+    "com.apple.generativeexperience*",
+    "com.apple.intelligenceflow*",
+    "com.apple.intelligencecontext*",
+    "com.apple.intelligenceplatform*",
+    "com.apple.knowledgeconstruction*",
+    "com.apple.knowledge-agent",
+    "com.apple.modelmanagerd",
+]

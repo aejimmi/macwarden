@@ -2,9 +2,9 @@
 
 use anyhow::{Context, Result};
 
-use macwarden_core::{Action, Domain, SafetyLevel, ServiceCategory, ServiceInfo, ServiceState};
-use macwarden_launchd::MacOsPlatform;
-use macwarden_snapshot::SnapshotStore;
+use launchd::MacOsPlatform;
+use policy::{Action, Domain, SafetyLevel, ServiceCategory, ServiceInfo, ServiceState};
+use snapshot::SnapshotStore;
 
 use super::enforce;
 use crate::cli;
@@ -74,7 +74,7 @@ pub fn run(name: Option<&str>, dry_run: bool) -> Result<()> {
 // ---------------------------------------------------------------------------
 
 /// Load a snapshot by name (timestamp stem).
-fn load_named(store: &SnapshotStore, name: &str) -> Result<macwarden_snapshot::Snapshot> {
+fn load_named(store: &SnapshotStore, name: &str) -> Result<snapshot::Snapshot> {
     let snapshots = store.list().context("failed to list snapshots")?;
 
     let (_stem, path) = snapshots
@@ -86,7 +86,7 @@ fn load_named(store: &SnapshotStore, name: &str) -> Result<macwarden_snapshot::S
 }
 
 /// Load the most recent snapshot.
-fn load_latest(store: &SnapshotStore) -> Result<macwarden_snapshot::Snapshot> {
+fn load_latest(store: &SnapshotStore) -> Result<snapshot::Snapshot> {
     store
         .latest()
         .context("failed to load latest snapshot")?
@@ -129,3 +129,7 @@ fn infer_rollback_domain(label: &str) -> Domain {
     let _ = label;
     Domain::User
 }
+
+#[cfg(test)]
+#[path = "rollback_test.rs"]
+mod rollback_test;

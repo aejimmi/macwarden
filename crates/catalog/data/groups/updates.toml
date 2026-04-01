@@ -1,0 +1,11 @@
+[group]
+name = "updates"
+description = "Software update and App Store services"
+safety = "optional"
+respawn_behavior = "respawns-launchd"
+patterns = [
+    "com.apple.SoftwareUpdate*",
+    "com.apple.softwareupdate*",
+    "com.apple.mobile.softwareupdated",
+    "com.apple.appstored",
+]

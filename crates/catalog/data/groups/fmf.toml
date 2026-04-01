@@ -1,0 +1,10 @@
+[group]
+name = "fmf"
+description = "Find My (device and friends location tracking)"
+safety = "recommended"
+patterns = [
+    "com.apple.findmy*",
+    "com.apple.FindMyMac*",
+    "com.apple.icloud.findmydeviced*",
+    "com.apple.findmymacmessenger",
+]

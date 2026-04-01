@@ -182,3 +182,7 @@ fn generate_plist(exe_path: &str, log_path: &str) -> String {
 "#
     )
 }
+
+#[cfg(test)]
+#[path = "daemon_test.rs"]
+mod daemon_test;

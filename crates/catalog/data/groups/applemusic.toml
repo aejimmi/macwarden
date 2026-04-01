@@ -1,0 +1,10 @@
+[group]
+name = "applemusic"
+description = "Apple Music and iTunes media services"
+safety = "recommended"
+patterns = [
+    "com.apple.amp.*",
+    "com.apple.AMPDevice*",
+    "com.apple.Music*",
+    "com.apple.iTunes*",
+]

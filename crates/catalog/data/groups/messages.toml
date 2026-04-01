@@ -1,0 +1,12 @@
+[group]
+name = "messages"
+description = "iMessage, FaceTime, and communication services"
+safety = "optional"
+patterns = [
+    "com.apple.imagent",
+    "com.apple.imtransferagent",
+    "com.apple.imautomatichistory*",
+    "com.apple.soagent",
+    "com.apple.identityservicesd",
+    "com.apple.CommCenter*",
+]

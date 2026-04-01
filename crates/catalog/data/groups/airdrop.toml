@@ -1,0 +1,10 @@
+[group]
+name = "airdrop"
+description = "AirDrop, Handoff, and nearby sharing"
+safety = "optional"
+patterns = [
+    "com.apple.AirDrop*",
+    "com.apple.rapport*",
+    "com.apple.sharingd",
+    "com.apple.Sharing*",
+]

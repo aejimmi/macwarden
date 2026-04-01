@@ -14,10 +14,11 @@ name = "macwarden"
 path = "src/main.rs"
 
 [dependencies]
-macwarden-core = { workspace = true }
-macwarden-catalog = { workspace = true }
-macwarden-launchd = { workspace = true }
-macwarden-snapshot = { workspace = true }
+policy = { workspace = true }
+catalog = { workspace = true }
+launchd = { workspace = true }
+snapshot = { workspace = true }
+sensors = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 serde = { workspace = true }

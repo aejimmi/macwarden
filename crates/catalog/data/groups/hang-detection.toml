@@ -1,0 +1,9 @@
+[group]
+name = "hang-detection"
+description = "Spin/hang sampling — used by Force Quit and Activity Monitor. Killable if you have ps/top"
+safety = "optional"
+patterns = [
+    "com.apple.spindump",
+    "com.apple.spindump_agent",
+    "com.apple.tailspind",
+]

@@ -1,0 +1,12 @@
+[group]
+name = "location"
+description = "Location services and geofencing"
+safety = "keep"
+patterns = [
+    "com.apple.locationd",
+    "com.apple.CoreLocationAgent",
+    "com.apple.geod",
+    "com.apple.geodMachServiceBridge",
+    "com.apple.routined",
+    "com.apple.locationaccessstored",
+]

@@ -1,0 +1,9 @@
+[group]
+name = "remote-access"
+description = "Screen sharing and remote desktop"
+safety = "recommended"
+patterns = [
+    "com.apple.screensharing*",
+    "com.apple.RemoteDesktop*",
+    "com.apple.SSInvitation*",
+]

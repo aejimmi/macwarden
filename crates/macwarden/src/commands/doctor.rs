@@ -4,7 +4,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use macwarden_catalog::DEFAULT_PLIST_DIRS;
+use catalog::DEFAULT_PLIST_DIRS;
 
 use crate::cli;
 

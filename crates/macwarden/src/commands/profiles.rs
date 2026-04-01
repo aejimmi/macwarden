@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 
-use macwarden_catalog::load_builtin_profiles;
+use catalog::load_builtin_profiles;
 
 use crate::cli::ProfilesSubcmd;
 
@@ -27,7 +27,7 @@ pub fn run(subcmd: Option<&ProfilesSubcmd>) -> Result<()> {
 }
 
 /// Print a summary list of all available profiles.
-fn list_profiles(profiles: &[macwarden_core::Profile]) {
+fn list_profiles(profiles: &[policy::Profile]) {
     println!("Available profiles:\n");
 
     for p in profiles {
@@ -46,7 +46,7 @@ fn list_profiles(profiles: &[macwarden_core::Profile]) {
 }
 
 /// Pretty-print the full rules of a specific profile.
-fn show_profile(profiles: &[macwarden_core::Profile], name: &str) -> Result<()> {
+fn show_profile(profiles: &[policy::Profile], name: &str) -> Result<()> {
     let profile = profiles
         .iter()
         .find(|p| p.profile.name == name)

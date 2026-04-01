@@ -6,9 +6,11 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
-use macwarden_core::{Action, ServiceInfo, is_critical};
-use macwarden_launchd::Platform;
-use macwarden_snapshot::{Snapshot, SnapshotEntry, SnapshotStore};
+use launchd::Platform;
+use policy::{
+    Action, RespawnBehavior, ServiceGroup, ServiceInfo, find_groups_for_service, is_critical,
+};
+use snapshot::{Snapshot, SnapshotEntry, SnapshotStore};
 
 use crate::cli;
 
@@ -121,8 +123,8 @@ pub fn enforce_enable(svc: &ServiceInfo, platform: &dyn Platform, dry_run: bool,
 /// original user's UID when running under sudo.
 pub fn domain_string(svc: &ServiceInfo) -> String {
     match svc.domain {
-        macwarden_core::Domain::System => "system".to_owned(),
-        macwarden_core::Domain::User | macwarden_core::Domain::Global => {
+        policy::Domain::System => "system".to_owned(),
+        policy::Domain::User | policy::Domain::Global => {
             let uid = std::env::var("SUDO_UID")
                 .or_else(|_| std::env::var("UID"))
                 .or_else(|_| std::env::var("EUID"))
@@ -179,6 +181,40 @@ pub fn timestamp_now() -> String {
 }
 
 // ---------------------------------------------------------------------------
+// Respawn warnings
+// ---------------------------------------------------------------------------
+
+/// Collect labels of services whose group has non-trivial respawn behavior.
+///
+/// Pure data lookup against the group catalog — no I/O, no subprocess calls.
+pub fn collect_respawning_labels(targets: &[&ServiceInfo], groups: &[ServiceGroup]) -> Vec<String> {
+    targets
+        .iter()
+        .filter(|svc| {
+            find_groups_for_service(&svc.label, groups)
+                .iter()
+                .any(|g| g.respawn_behavior != RespawnBehavior::StaysDead)
+        })
+        .map(|svc| svc.label.clone())
+        .collect()
+}
+
+/// Print a consolidated respawn warning for the given labels.
+pub fn warn_respawning(labels: &[String]) {
+    if labels.is_empty() {
+        return;
+    }
+    eprintln!(
+        "\nWarning: {} service(s) will respawn after being killed:",
+        labels.len()
+    );
+    for label in labels {
+        eprintln!("  {label}");
+    }
+    eprintln!("Run `macwarden watch` to keep them disabled.");
+}
+
+// ---------------------------------------------------------------------------
 // Shell commands
 // ---------------------------------------------------------------------------
 
@@ -214,3 +250,7 @@ pub fn save_active_profile(name: &str) -> Result<()> {
     std::fs::write(&path, name).context("failed to write active profile")?;
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "enforce_test.rs"]
+mod enforce_test;

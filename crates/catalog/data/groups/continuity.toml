@@ -1,0 +1,10 @@
+[group]
+name = "continuity"
+description = "Handoff, Universal Clipboard, phone call relay. rapportd listens on port 62726"
+safety = "optional"
+patterns = [
+    "com.apple.rapport*",
+    "com.apple.sidecar*",
+    "com.apple.mediacontinuityd",
+    "com.apple.universalcontrol",
+]

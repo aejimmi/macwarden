@@ -1,0 +1,8 @@
+[group]
+name = "mail"
+description = "Apple Mail"
+safety = "optional"
+patterns = [
+    "com.apple.mail*",
+    "com.apple.Mail*",
+]
