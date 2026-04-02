@@ -1,93 +1,124 @@
-# macwarden
+# macwarden (EXPERIMENTAL)
 
-An app firewall for macOS. Discovers every launchd service on your system, groups them by function, and lets you block what you don't need. Written in Rust.
+Your Mac runs 500+ silent processes — telemetry, profiling, Siri, Spotlight, iCloud sync. There's no off switch. **macwarden is the off switch.**
 
-## Why
+## Your Mac is not yours
 
-macOS runs hundreds of background services out of the box — telemetry, profiling, ML-powered behavioral prediction. Most of it runs silently with no off switch in System Settings. macwarden gives you that switch.
+A fresh Mac with no apps installed runs over 500 background processes. Most have no controls in System Settings. Here's what they do:
 
-See [themacfiles](https://github.com/aejimmi/themacfiles) for the research: what Apple collects, which ML models run on your data, and the full model inventory.
+**Spotlight** sends your search queries to Apple, Microsoft Bing, and unnamed third parties — along with your location, the apps you use, and what you click. Enabled by default since 2014.
 
-## Quick start
+**Siri** records and sends audio to Apple servers, including accidental activations. A whistleblower revealed contractors listened to intimate conversations, medical details, and business calls. Apple admitted it. Paid $95M to settle in January 2025.
 
-```
+**On-device profiling** — coreduetd, suggestd, biomesyncd, routined — learns your daily patterns, app usage, movement, and habits. Feeds Apple Intelligence and Siri suggestions. Runs continuously.
+
+**Telemetry** — analyticsd, reportingd, and 18 other services report diagnostics, usage patterns, and crash data. Always on.
+
+**iCloud** — in February 2025, the UK government ordered Apple to backdoor iCloud under the Investigatory Powers Act. Apple complied by removing end-to-end encryption for UK users.
+
+You can't turn most of this off. macOS gives you a few toggles in System Settings. The services keep running.
+
+macwarden discovers all of them, groups them by function, and lets you shut them down — even the ones Apple doesn't expose. Works with SIP enabled.
+
+## Install
+
+```bash
 cargo install --path crates/macwarden
-macwarden
 ```
 
-See the groups, pick what to investigate:
+Or download the notarized `.dmg` from [Releases](#).
 
-```
-macwarden info telemetry
-```
+## Lock it down
 
-Block it:
+Disable telemetry, Siri, Spotlight, iCloud sync, Apple Intelligence, profiling, and 90+ other services in one command:
 
-```
-sudo macwarden block telemetry
-```
-
-Or apply the privacy profile to block telemetry, Siri, Spotlight, iCloud sync, Apple Intelligence, AirPlay, widgets, and more — 93 services in one command:
-
-```
+```bash
 sudo macwarden use privacy
 ```
 
-Undo anything:
+Every action is snapshotted. Undo everything:
 
-```
+```bash
 sudo macwarden undo
 ```
 
-## Usage
+## See what's running
 
 ```bash
-macwarden                         # show service groups (default)
-macwarden info siri               # inspect a group — services, ports, what it does
-macwarden info com.apple.Siri.agent   # inspect a single service — binary, XPC, frameworks
-
-sudo macwarden block siri         # stop a group from running
-sudo macwarden block siri --except com.apple.parsecd   # selective
-sudo macwarden allow siri         # let it run again
-
-sudo macwarden use privacy        # apply the privacy profile
-sudo macwarden undo               # revert last action
-
-macwarden network                 # show active network connections by service
-sudo macwarden watch              # continuous enforcement — catch services that respawn
+macwarden                     # list all service groups
+macwarden network             # active network connections by service
+macwarden devices             # camera and microphone access
 ```
 
-`block`, `allow`, `use`, `undo`, and `watch` require root. Everything else works without it.
+## Go deeper
 
-## Groups
+Inspect a group — what services it contains, what they do, what ports they use:
 
-Each group maps a human concept to a set of launchd service patterns. `block spotlight` handles 16 services plus `mdutil -a -i off`. `block airplay` closes ports 7000 and 5000 that are open to your LAN.
-
-Run `macwarden` to see all groups with live service counts.
-
-## Enforcement
-
-Three layers, in order:
-
-1. **`launchctl disable`** — prevents loading. Survives reboot. Works with SIP enabled.
-2. **`launchctl bootout`** — unloads now. Blocked by SIP for Apple system daemons.
-3. **`kill -9`** — terminates. Also blocked by SIP for protected processes.
-
-With SIP enabled, services stay alive until reboot, then they're gone. Every `block` and `use` writes a snapshot. `undo` restores it.
-
-Recovery: boot to Recovery Mode, open Terminal, delete `/private/var/db/com.apple.xpc.launchd/disabled.plist`.
-
-## Building
-
-Requires Rust 1.94+.
-
-```
-git clone https://github.com/user/macwarden
-cd macwarden
-cargo build --release
-./target/release/macwarden
+```bash
+macwarden info siri
+macwarden info com.apple.Siri.agent   # inspect a single service
 ```
 
-## License
+Block or allow individual groups:
 
-MIT
+```bash
+sudo macwarden block siri
+sudo macwarden block telemetry
+sudo macwarden allow siri             # re-enable
+```
+
+Exclude specific services from a group block:
+
+```bash
+sudo macwarden block continuity --except com.apple.Handoff
+```
+
+Delete cached data left behind by disabled services:
+
+```bash
+sudo macwarden scrub telemetry
+```
+
+## Stay locked down
+
+Services respawn. macwarden watches for drift and re-enforces:
+
+```bash
+sudo macwarden watch              # continuous enforcement
+sudo macwarden watch --install    # run as persistent daemon
+```
+
+## Commands
+
+```
+macwarden                         list service groups (default)
+macwarden info <target>           inspect a group, service, or profile
+macwarden network                 active network connections by service
+macwarden devices                 camera and microphone access
+
+sudo macwarden use <profile>      apply a profile (e.g. privacy)
+sudo macwarden block <target>     disable a service or group
+sudo macwarden allow <target>     re-enable a service or group
+sudo macwarden scrub <group>      delete cached data for a group
+sudo macwarden watch              continuous enforcement
+sudo macwarden undo               revert last action
+```
+
+## How it works
+
+macwarden uses `launchctl disable` to persistently prevent services from loading — this works with SIP enabled. For immediate effect, it also runs `bootout` and `kill -9` as needed.
+
+Blocked services stay off across reboots. Every destructive action saves a snapshot so you can `undo`.
+
+The catalog covers 255 macOS services organized into 34 groups with safety tiers (recommended, optional, keep). 16 critical services (WindowServer, launchd, securityd) are hardcoded as undisableable.
+
+Recovery: boot into Recovery Mode → Terminal → delete `/private/var/db/com.apple.xpc.launchd/disabled.plist`.
+
+See [themacfiles](https://github.com/aejimmi/themacfiles) for the full research on macOS data collection and on-device ML models.
+
+## Roadmap
+
+- Network firewall — per-service outbound allow/block rules
+- Real-time microphone and camera monitoring per service
+- Graphical interface
+- Additional profiles — minimal, developer, airgapped, studio, paranoid
