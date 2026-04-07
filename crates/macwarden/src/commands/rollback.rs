@@ -18,7 +18,7 @@ use crate::cli;
 /// Loads a snapshot (latest or by name) and re-enables every service that was
 /// previously disabled. Uses the shared enforcement helpers for consistency.
 pub fn run(name: Option<&str>, dry_run: bool) -> Result<()> {
-    let snap_dir = cli::expand_home("~/.local/share/macwarden/snapshots")?;
+    let snap_dir = cli::expand_home("~/.macwarden/snapshots")?;
     let store = SnapshotStore::new(snap_dir);
 
     let snapshot = match name {

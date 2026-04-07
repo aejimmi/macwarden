@@ -1,7 +1,0 @@
-[group]
-name = "system-logging"
-description = "Powers `log show/stream` and Console.app. Most users should keep this"
-safety = "keep"
-patterns = [
-    "com.apple.diagnosticd",
-]

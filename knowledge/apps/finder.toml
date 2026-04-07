@@ -1,0 +1,5 @@
+code_id = "com.apple.Finder"
+name = "Finder"
+developer = "Apple Inc."
+category = "system"
+description = "macOS file manager and desktop shell"

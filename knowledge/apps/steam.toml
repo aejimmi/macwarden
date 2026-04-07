@@ -1,0 +1,5 @@
+code_id = "com.valvesoftware.steam"
+name = "Steam"
+developer = "Valve Corporation"
+category = "gaming"
+description = "Game distribution platform and launcher"

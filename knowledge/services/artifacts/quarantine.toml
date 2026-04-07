@@ -1,0 +1,9 @@
+[domain]
+name = "quarantine"
+description = "Download history recorded by macOS Gatekeeper quarantine"
+safety = "recommended"
+
+[[artifact]]
+name = "quarantine-events-db"
+path = "~/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV2"
+description = "SQLite database of every file downloaded via a browser or curl"

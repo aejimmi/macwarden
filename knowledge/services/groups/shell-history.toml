@@ -1,0 +1,12 @@
+[group]
+name = "shell-history"
+description = "Shell command history and terminal session logs — every command ever typed"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -f ~/.zsh_history",
+    "rm -f ~/.bash_history",
+    "rm -f ~/.sh_history",
+    "rm -rf ~/.zsh_sessions/",
+    "rm -rf ~/.bash_sessions/",
+]

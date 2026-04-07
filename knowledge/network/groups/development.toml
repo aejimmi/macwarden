@@ -1,0 +1,33 @@
+[group]
+name = "development"
+description = "Package managers, CI/CD, documentation"
+default_enabled = false
+priority = 20
+
+[[group.rules]]
+name = "Package registries"
+process = "*"
+dest_hosts = [
+    "registry.npmjs.org", "crates.io", "static.crates.io",
+    "pypi.org", "files.pythonhosted.org",
+    "rubygems.org", "packagist.org",
+]
+action = "allow"
+
+[[group.rules]]
+name = "GitHub"
+process = "*"
+dest_hosts = ["github.com", "*.github.com", "*.githubusercontent.com", "github.io"]
+action = "allow"
+
+[[group.rules]]
+name = "Docker"
+process = "*"
+dest_hosts = ["registry-1.docker.io", "auth.docker.io", "production.cloudflare.docker.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Documentation"
+process = "*"
+dest_hosts = ["docs.rs", "doc.rust-lang.org", "developer.apple.com"]
+action = "allow"

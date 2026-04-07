@@ -1,0 +1,24 @@
+[group]
+name = "profiling"
+description = "On-device behavioral profiling — CoreDuet tracks app usage, device interactions, and location to build per-user prediction models. Runs ML classifiers (decision trees, gradient-boosted trees, random forests) to fingerprint users. Disabling breaks Siri Suggestions and Handoff routing"
+safety = "recommended"
+respawn_behavior = "respawns-aggressive"
+patterns = [
+    "com.apple.coreduetd",
+    "com.apple.duetexpertd",
+    "com.apple.suggestd",
+    "com.apple.biomesyncd",
+]
+cleanup_commands = [
+    "rm -rf ~/Library/Application\\ Support/Knowledge/knowledgeC.db*",
+    "rm -rf ~/Library/Application\\ Support/com.apple.DuetExpertCenter",
+    "rm -rf ~/Library/Suggestions",
+    "rm -f /private/var/db/CoreDuet/Knowledge/knowledgeC.db",
+    "rm -f /private/var/db/CoreDuet/Knowledge/knowledgeC.db-shm",
+    "rm -f /private/var/db/CoreDuet/Knowledge/knowledgeC.db-wal",
+    "rm -f /private/var/db/CoreDuet/People/interactionC.db",
+    "rm -f /private/var/db/CoreDuet/People/interactionC.db-shm",
+    "rm -f /private/var/db/CoreDuet/People/interactionC.db-wal",
+    "rm -rf /private/var/db/biome/streams/",
+    "rm -rf ~/Library/Biome/streams/",
+]

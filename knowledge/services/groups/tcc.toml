@@ -1,0 +1,10 @@
+[group]
+name = "tcc"
+description = "Permission request history — every app that requested camera, mic, screen recording, disk access"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -f ~/Library/Application\\ Support/com.apple.TCC/TCC.db",
+    "rm -f ~/Library/Application\\ Support/com.apple.TCC/TCC.db-shm",
+    "rm -f ~/Library/Application\\ Support/com.apple.TCC/TCC.db-wal",
+]

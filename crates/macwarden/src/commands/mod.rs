@@ -17,12 +17,17 @@ pub mod enable;
 pub mod enforce;
 pub mod groups;
 pub mod inspect;
+pub mod lookup;
 pub mod monitor;
+pub mod net;
 pub mod network;
+pub mod network_enrich;
 pub mod rollback;
 pub mod scan;
 pub mod scrub;
+pub(crate) mod scrub_fs;
 pub mod status;
+pub(crate) mod status_collect;
 
 // Retained — not routed from CLI but code preserved for future use.
 #[allow(dead_code)]

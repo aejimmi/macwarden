@@ -1,0 +1,9 @@
+[group]
+name = "install-history"
+description = "Package installation history — every .pkg ever installed with timestamps"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -f /Library/Receipts/InstallHistory.plist",
+    "rm -rf /private/var/db/receipts/",
+]

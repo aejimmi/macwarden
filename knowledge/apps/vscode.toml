@@ -1,0 +1,5 @@
+code_id = "com.microsoft.VSCode"
+name = "VS Code"
+developer = "Microsoft Corporation"
+category = "development"
+description = "Cross-platform source code editor"

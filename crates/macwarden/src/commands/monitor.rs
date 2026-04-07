@@ -14,7 +14,7 @@
 //! which doubles as the periodic sweep timer. `signal-hook` handles SIGTERM
 //! and SIGINT for clean shutdown.
 //!
-//! Profile hot-reload: when `~/.config/macwarden/active-profile` changes
+//! Profile hot-reload: when `~/.macwarden/active-profile` changes
 //! (e.g. another terminal runs `macwarden apply developer`), the monitor
 //! reloads the new profile and re-sweeps.
 
@@ -45,20 +45,22 @@ const SWEEP_INTERVAL: Duration = Duration::from_secs(60);
 /// Debounce window — suppress repeated messages for the same service.
 const DEBOUNCE_WINDOW: Duration = Duration::from_secs(10);
 
-/// Sentinel value sent through the channel when the active-profile file changes.
-const PROFILE_RELOAD_SENTINEL: &str = "__profile_reload__";
+// ---------------------------------------------------------------------------
+// Monitor message types
+// ---------------------------------------------------------------------------
 
-/// Sentinel value sent when a microphone activation is detected.
-const SENSOR_MIC_ON: &str = "__sensor_mic_on__";
-
-/// Sentinel value sent when a microphone deactivation is detected.
-const SENSOR_MIC_OFF: &str = "__sensor_mic_off__";
-
-/// Sentinel value sent when a camera activation is detected.
-const SENSOR_CAM_ON: &str = "__sensor_cam_on__";
-
-/// Sentinel value sent when a camera deactivation is detected.
-const SENSOR_CAM_OFF: &str = "__sensor_cam_off__";
+/// Messages flowing through the main monitor channel.
+///
+/// Replaces the previous approach of multiplexing FSEvents, profile reloads,
+/// and sensor events through a single `Vec<String>` with sentinel values.
+enum MonitorMessage {
+    /// FSEvents fired for one or more plist files.
+    FsEvent(Vec<String>),
+    /// The active-profile config file changed.
+    ProfileReload,
+    /// A hardware sensor event (camera/mic activated/deactivated/connected).
+    Sensor(sensors::SensorEvent),
+}
 
 // ---------------------------------------------------------------------------
 // Command
@@ -116,52 +118,16 @@ pub fn run(profile_override: Option<&str>) -> Result<()> {
         }
 
         match rx.recv_timeout(SWEEP_INTERVAL) {
-            Ok(labels) => {
-                // Check for profile reload signal.
-                if labels.iter().any(|l| l == PROFILE_RELOAD_SENTINEL) {
-                    if let Some(new_profile) = try_reload_profile(&current_profile_name, &builtins)?
-                    {
-                        current_profile_name = new_profile.0;
-                        resolved = new_profile.1;
-                        debounce.clear();
-                        stats.profile_reloads += 1;
-
-                        // Re-sweep with new profile.
-                        let count = enforce_sweep(&resolved, &platform, &mut stats)?;
-                        if count > 0 {
-                            stats.event_enforcements += count;
-                        }
-                    }
-                    continue;
-                }
-
-                // Check for sensor events.
-                if labels.iter().any(|l| is_sensor_sentinel(l)) {
-                    handle_sensor_events(&labels, &resolved, &platform, &mut stats)?;
-                    continue;
-                }
-
-                // FSEvents fired — targeted re-check for affected services.
-                let now = Instant::now();
-                let fresh: Vec<String> = labels
-                    .into_iter()
-                    .filter(|l| {
-                        debounce
-                            .get(l)
-                            .is_none_or(|last| now.duration_since(*last) > DEBOUNCE_WINDOW)
-                    })
-                    .collect();
-
-                if !fresh.is_empty() {
-                    let count = enforce_sweep(&resolved, &platform, &mut stats)?;
-                    let now = Instant::now();
-                    for label in &fresh {
-                        debounce.insert(label.clone(), now);
-                    }
-                    if count > 0 {
-                        stats.event_enforcements += count;
-                    }
-                }
+            Ok(msg) => {
+                handle_message(
+                    msg,
+                    &mut resolved,
+                    &mut current_profile_name,
+                    &builtins,
+                    &platform,
+                    &mut stats,
+                    &mut debounce,
+                )?;
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 // Periodic reconciliation sweep.
@@ -194,6 +160,147 @@ pub fn run(profile_override: Option<&str>) -> Result<()> {
         stats.profile_reloads,
     );
 
+    Ok(())
+}
+
+/// Dispatch a single monitor message.
+fn handle_message(
+    msg: MonitorMessage,
+    resolved: &mut Profile,
+    current_name: &mut String,
+    builtins: &[Profile],
+    platform: &dyn Platform,
+    stats: &mut MonitorStats,
+    debounce: &mut HashMap<String, Instant>,
+) -> Result<()> {
+    match msg {
+        MonitorMessage::ProfileReload => {
+            handle_profile_reload(resolved, current_name, builtins, platform, stats, debounce)?;
+        }
+        MonitorMessage::Sensor(event) => {
+            handle_sensor_event(&event, resolved, platform, stats)?;
+        }
+        MonitorMessage::FsEvent(labels) => {
+            handle_fs_event(labels, resolved, platform, stats, debounce)?;
+        }
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Message handlers
+// ---------------------------------------------------------------------------
+
+/// Handle a profile reload signal.
+fn handle_profile_reload(
+    resolved: &mut Profile,
+    current_name: &mut String,
+    builtins: &[Profile],
+    platform: &dyn Platform,
+    stats: &mut MonitorStats,
+    debounce: &mut HashMap<String, Instant>,
+) -> Result<()> {
+    if let Some(new_profile) = try_reload_profile(current_name, builtins)? {
+        *current_name = new_profile.0;
+        *resolved = new_profile.1;
+        debounce.clear();
+        stats.profile_reloads += 1;
+
+        let count = enforce_sweep(resolved, platform, stats)?;
+        if count > 0 {
+            stats.event_enforcements += count;
+        }
+    }
+    Ok(())
+}
+
+/// Handle a hardware sensor event.
+fn handle_sensor_event(
+    event: &sensors::SensorEvent,
+    profile: &Profile,
+    platform: &dyn Platform,
+    stats: &mut MonitorStats,
+) -> Result<()> {
+    let device = event.device();
+    match event {
+        sensors::SensorEvent::DeviceActivated(_) => {
+            // Screen capture is informational — no enforcement sweep.
+            if device.kind == sensors::MediaDeviceKind::Screen {
+                println!(
+                    "  [{kind}] {name} — screen recording detected",
+                    kind = device.kind,
+                    name = device.name,
+                );
+            } else {
+                println!(
+                    "  [{kind}] {name} activated — running enforcement sweep",
+                    kind = device.kind,
+                    name = device.name,
+                );
+                let count = enforce_sweep(profile, platform, stats)?;
+                if count > 0 {
+                    stats.sensor_enforcements += count;
+                } else {
+                    println!(
+                        "  [{kind}] all running services are allowed by profile",
+                        kind = device.kind,
+                    );
+                }
+            }
+        }
+        sensors::SensorEvent::DeviceDeactivated(_) => {
+            println!(
+                "  [{kind}] {name} deactivated",
+                kind = device.kind,
+                name = device.name,
+            );
+        }
+        sensors::SensorEvent::DeviceConnected(_) => {
+            println!(
+                "  [{kind}] {name} connected",
+                kind = device.kind,
+                name = device.name,
+            );
+        }
+        sensors::SensorEvent::DeviceDisconnected(_) => {
+            println!(
+                "  [{kind}] {name} disconnected",
+                kind = device.kind,
+                name = device.name,
+            );
+        }
+    }
+    Ok(())
+}
+
+/// Handle FSEvents for plist file changes.
+fn handle_fs_event(
+    labels: Vec<String>,
+    profile: &Profile,
+    platform: &dyn Platform,
+    stats: &mut MonitorStats,
+    debounce: &mut HashMap<String, Instant>,
+) -> Result<()> {
+    let now = Instant::now();
+    let fresh: Vec<String> = labels
+        .into_iter()
+        .filter(|l| {
+            debounce
+                .get(l)
+                .is_none_or(|last| now.duration_since(*last) > DEBOUNCE_WINDOW)
+        })
+        .collect();
+
+    if !fresh.is_empty() {
+        let count = enforce_sweep(profile, platform, stats)?;
+        let now = Instant::now();
+        for label in &fresh {
+            debounce.insert(label.clone(), now);
+        }
+        if count > 0 {
+            stats.event_enforcements += count;
+        }
+    }
     Ok(())
 }
 
@@ -243,9 +350,7 @@ fn try_reload_profile(
 
     match resolve_profile(&new_name, builtins) {
         Ok(resolved) => {
-            println!(
-                "\n  [reload] profile changed: {current_name} → {new_name}. Re-sweeping...\n"
-            );
+            println!("\n  [reload] profile changed: {current_name} → {new_name}. Re-sweeping...\n");
             Ok(Some((new_name, resolved)))
         }
         Err(e) => {
@@ -326,38 +431,59 @@ fn enforce_sweep(
 struct SensorGuards {
     _mic: Option<sensors::microphone::MicMonitor>,
     _cam: Option<sensors::camera::CameraMonitor>,
+    _screen: Option<sensors::screen::ScreenMonitor>,
+    _power: Option<sensors::power::PowerMonitor>,
 }
 
-/// Start camera and microphone hardware monitoring.
+/// Start camera, microphone, screen, and power monitoring.
 ///
-/// Events are forwarded into the main channel as sentinel strings so the
-/// existing `recv_timeout` loop can handle them alongside FSEvents.
-fn start_sensors(tx: mpsc::Sender<Vec<String>>) -> SensorGuards {
+/// Events are forwarded into the main channel as `MonitorMessage::Sensor`
+/// variants via a bridge thread. Debouncing and sleep/wake suppression
+/// are applied at the sensor layer.
+fn start_sensors(tx: mpsc::Sender<MonitorMessage>) -> SensorGuards {
     let (sensor_tx, sensor_rx) = mpsc::channel();
 
-    // Forward sensor events to the main channel as sentinels.
+    // Start power monitor (sleep/wake awareness).
+    let (power, awake) = match sensors::power::PowerMonitor::start() {
+        Ok((p, a)) => {
+            println!("  Power monitoring: active (sleep/wake awareness)");
+            (Some(p), Some(a))
+        }
+        Err(e) => {
+            tracing::debug!(error = %e, "power monitoring unavailable");
+            (None, None)
+        }
+    };
+
+    // Wrap the sensor sender with debouncing.
+    let debounced = std::sync::Arc::new(sensors::debounce::DebouncedSender::new(sensor_tx));
+
+    // Bridge thread: forward sensor events into the main MonitorMessage channel.
+    // Checks the awake flag to suppress events during sleep/wake transitions.
     let main_tx = tx;
+    let awake_flag = awake.clone();
     std::thread::Builder::new()
         .name("sensor-fwd".into())
         .spawn(move || {
             for event in sensor_rx {
-                let sentinel = match event {
-                    sensors::SensorEvent::MicrophoneActivated => SENSOR_MIC_ON,
-                    sensors::SensorEvent::MicrophoneDeactivated => SENSOR_MIC_OFF,
-                    sensors::SensorEvent::CameraActivated => SENSOR_CAM_ON,
-                    sensors::SensorEvent::CameraDeactivated => SENSOR_CAM_OFF,
-                };
-                if main_tx.send(vec![sentinel.to_owned()]).is_err() {
+                // Suppress sensor events while system is asleep/waking.
+                if let Some(ref flag) = awake_flag
+                    && !flag.load(std::sync::atomic::Ordering::Relaxed)
+                {
+                    tracing::debug!("suppressing sensor event during sleep/wake");
+                    continue;
+                }
+                if main_tx.send(MonitorMessage::Sensor(event)).is_err() {
                     break;
                 }
             }
         })
         .ok();
 
-    // Start microphone monitor (CoreAudio — instant callbacks).
-    let mic = match sensors::microphone::MicMonitor::start(sensor_tx.clone()) {
+    // Start microphone monitor (CoreAudio — multi-device listeners).
+    let mic = match sensors::microphone::MicMonitor::start(debounced.inner()) {
         Ok(m) => {
-            println!("  Microphone monitoring: active (CoreAudio)");
+            println!("  Microphone monitoring: active (CoreAudio, multi-device)");
             Some(m)
         }
         Err(e) => {
@@ -366,10 +492,10 @@ fn start_sensors(tx: mpsc::Sender<Vec<String>>) -> SensorGuards {
         }
     };
 
-    // Start camera monitor (ioreg polling — 2s interval).
-    let cam = match sensors::camera::CameraMonitor::start(sensor_tx) {
+    // Start camera monitor (IOKit notifications with polling fallback).
+    let cam = match sensors::camera::CameraMonitor::start(debounced.inner().clone()) {
         Ok(c) => {
-            println!("  Camera monitoring: active (polling)");
+            println!("  Camera monitoring: active (IOKit)");
             Some(c)
         }
         Err(e) => {
@@ -378,58 +504,24 @@ fn start_sensors(tx: mpsc::Sender<Vec<String>>) -> SensorGuards {
         }
     };
 
+    // Start screen capture monitor (polling).
+    let screen = match sensors::screen::ScreenMonitor::start(debounced.inner().clone()) {
+        Ok(s) => {
+            println!("  Screen capture monitoring: active (polling)");
+            Some(s)
+        }
+        Err(e) => {
+            tracing::debug!(error = %e, "screen capture monitoring unavailable");
+            None
+        }
+    };
+
     SensorGuards {
         _mic: mic,
         _cam: cam,
+        _screen: screen,
+        _power: power,
     }
-}
-
-/// Check if a label string is a sensor sentinel.
-fn is_sensor_sentinel(label: &str) -> bool {
-    matches!(
-        label,
-        SENSOR_MIC_ON | SENSOR_MIC_OFF | SENSOR_CAM_ON | SENSOR_CAM_OFF
-    )
-}
-
-/// Handle sensor events: log the hardware change and run an immediate
-/// enforcement sweep to catch denied services that triggered the access.
-fn handle_sensor_events(
-    labels: &[String],
-    profile: &Profile,
-    platform: &dyn Platform,
-    stats: &mut MonitorStats,
-) -> Result<()> {
-    for label in labels {
-        match label.as_str() {
-            SENSOR_MIC_ON => {
-                println!("  [mic] activated — running enforcement sweep");
-                let count = enforce_sweep(profile, platform, stats)?;
-                if count > 0 {
-                    stats.sensor_enforcements += count;
-                } else {
-                    println!("  [mic] all running services are allowed by profile");
-                }
-            }
-            SENSOR_MIC_OFF => {
-                println!("  [mic] deactivated");
-            }
-            SENSOR_CAM_ON => {
-                println!("  [camera] activated — running enforcement sweep");
-                let count = enforce_sweep(profile, platform, stats)?;
-                if count > 0 {
-                    stats.sensor_enforcements += count;
-                } else {
-                    println!("  [camera] all running services are allowed by profile");
-                }
-            }
-            SENSOR_CAM_OFF => {
-                println!("  [camera] deactivated");
-            }
-            _ => {}
-        }
-    }
-    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -438,12 +530,15 @@ fn handle_sensor_events(
 
 /// Start an FSEvents watcher on the canonical plist directories.
 ///
-/// Returns the watcher (must be kept alive) and sends affected plist labels
-/// through the channel when files are created, modified, or removed.
+/// Returns the watcher (must be kept alive) and sends `MonitorMessage`
+/// variants through the channel when files change.
 ///
 /// When `watch_profile` is true, also watches the active-profile config file
-/// and sends a reload sentinel when it changes.
-fn start_watcher(tx: mpsc::Sender<Vec<String>>, watch_profile: bool) -> Result<RecommendedWatcher> {
+/// and sends a `ProfileReload` message when it changes.
+fn start_watcher(
+    tx: mpsc::Sender<MonitorMessage>,
+    watch_profile: bool,
+) -> Result<RecommendedWatcher> {
     let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
         let Ok(event) = res else { return };
 
@@ -463,7 +558,7 @@ fn start_watcher(tx: mpsc::Sender<Vec<String>>, watch_profile: bool) -> Result<R
             .any(|p| p.file_name().and_then(|n| n.to_str()) == Some("active-profile"));
 
         if is_profile_change {
-            let _ = tx.send(vec![PROFILE_RELOAD_SENTINEL.to_owned()]);
+            let _ = tx.send(MonitorMessage::ProfileReload);
             return;
         }
 
@@ -476,8 +571,7 @@ fn start_watcher(tx: mpsc::Sender<Vec<String>>, watch_profile: bool) -> Result<R
             .collect();
 
         if !labels.is_empty() {
-            // Best-effort send — if the channel is full or closed, drop it.
-            let _ = tx.send(labels);
+            let _ = tx.send(MonitorMessage::FsEvent(labels));
         }
     })?;
 

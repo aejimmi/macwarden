@@ -1,5 +1,8 @@
+#![allow(clippy::indexing_slicing, clippy::panic)]
+
 use super::*;
 
+use policy::artifact::{ArtifactAction, find_artifact, find_artifact_domain};
 use policy::types::{Domain, SafetyLevel, ServiceCategory, ServiceInfo, ServiceState};
 use policy::{find_group, find_groups_for_service, resolve_group_services, validate_profile};
 
@@ -27,7 +30,7 @@ fn make_service(label: &str) -> ServiceInfo {
 #[test]
 fn test_builtin_groups_count() {
     let groups = load_builtin_groups();
-    assert_eq!(groups.len(), 34);
+    assert_eq!(groups.len(), 48);
 }
 
 #[test]
@@ -62,6 +65,20 @@ fn test_find_group_by_name() {
     assert!(find_group("hang-detection", &groups).is_some());
     assert!(find_group("network-quality", &groups).is_some());
     assert!(find_group("system-logging", &groups).is_some());
+    assert!(find_group("audit-logs", &groups).is_some());
+    assert!(find_group("document-versions", &groups).is_some());
+    assert!(find_group("fsevents", &groups).is_some());
+    assert!(find_group("gatekeeper", &groups).is_some());
+    assert!(find_group("install-history", &groups).is_some());
+    assert!(find_group("network-usage", &groups).is_some());
+    assert!(find_group("print-logs", &groups).is_some());
+    assert!(find_group("quarantine", &groups).is_some());
+    assert!(find_group("quicklook", &groups).is_some());
+    assert!(find_group("recent-items", &groups).is_some());
+    assert!(find_group("saved-state", &groups).is_some());
+    assert!(find_group("shell-history", &groups).is_some());
+    assert!(find_group("tcc", &groups).is_some());
+    assert!(find_group("wifi", &groups).is_some());
     assert!(find_group("nonexistent", &groups).is_none());
 }
 
@@ -304,6 +321,181 @@ fn test_find_groups_for_service_builtin() {
     assert_eq!(matched[0].name, "telemetry");
 }
 
+// ---------------------------------------------------------------------------
+// New scrub-focused groups
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_wifi_group_patterns() {
+    let groups = load_builtin_groups();
+    let group = find_group("wifi", &groups).expect("wifi group must exist");
+    assert!(group.matches("com.apple.wifid"));
+    assert!(group.matches("com.apple.wifi.WiFiAgent"));
+    assert!(group.matches("com.apple.airportd"));
+    assert!(!group.matches("com.apple.bluetoothd"));
+}
+
+#[test]
+fn test_quicklook_group_patterns() {
+    let groups = load_builtin_groups();
+    let group = find_group("quicklook", &groups).expect("quicklook group must exist");
+    assert!(group.matches("com.apple.quicklook.ThumbnailsAgent"));
+    assert!(!group.matches("com.apple.Spotlight"));
+}
+
+#[test]
+fn test_quarantine_group_artifact_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("quarantine", &groups).expect("quarantine group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(
+        group.cleanup_commands.is_empty(),
+        "cleanup migrated to artifacts"
+    );
+}
+
+#[test]
+fn test_recent_items_group_artifact_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("recent-items", &groups).expect("recent-items group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(
+        group.cleanup_commands.is_empty(),
+        "cleanup migrated to artifacts"
+    );
+}
+
+#[test]
+fn test_bluetooth_group_has_cleanup() {
+    let groups = load_builtin_groups();
+    let group = find_group("bluetooth", &groups).expect("bluetooth group must exist");
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_location_group_has_cleanup() {
+    let groups = load_builtin_groups();
+    let group = find_group("location", &groups).expect("location group must exist");
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_safari_group_cleanup_migrated() {
+    let groups = load_builtin_groups();
+    let group = find_group("safari", &groups).expect("safari group must exist");
+    assert!(
+        group.cleanup_commands.is_empty(),
+        "cleanup migrated to artifacts"
+    );
+}
+
+#[test]
+fn test_siri_group_has_cleanup() {
+    let groups = load_builtin_groups();
+    let group = find_group("siri", &groups).expect("siri group must exist");
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_shell_history_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("shell-history", &groups).expect("shell-history group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_saved_state_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("saved-state", &groups).expect("saved-state group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(
+        group.cleanup_commands.is_empty(),
+        "cleanup migrated to artifacts"
+    );
+}
+
+#[test]
+fn test_install_history_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("install-history", &groups).expect("install-history group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_network_usage_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("network-usage", &groups).expect("network-usage group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_print_logs_group_patterns() {
+    let groups = load_builtin_groups();
+    let group = find_group("print-logs", &groups).expect("print-logs group must exist");
+    assert!(group.matches("com.apple.cupsd"));
+    assert!(group.matches("org.cups.cupsd"));
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_document_versions_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group =
+        find_group("document-versions", &groups).expect("document-versions group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_tcc_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("tcc", &groups).expect("tcc group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_fsevents_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("fsevents", &groups).expect("fsevents group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_audit_logs_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("audit-logs", &groups).expect("audit-logs group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_gatekeeper_group_scrub_only() {
+    let groups = load_builtin_groups();
+    let group = find_group("gatekeeper", &groups).expect("gatekeeper group must exist");
+    assert!(group.patterns.is_empty());
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_system_logging_group_has_cleanup() {
+    let groups = load_builtin_groups();
+    let group = find_group("system-logging", &groups).expect("system-logging group must exist");
+    assert!(!group.cleanup_commands.is_empty());
+}
+
+#[test]
+fn test_profiling_group_has_biome_cleanup() {
+    let groups = load_builtin_groups();
+    let group = find_group("profiling", &groups).expect("profiling group must exist");
+    let has_biome = group.cleanup_commands.iter().any(|c| c.contains("biome"));
+    assert!(has_biome, "profiling cleanup should include biome paths");
+}
+
 #[test]
 fn test_find_groups_for_service_no_match_builtin() {
     let groups = load_builtin_groups();
@@ -383,4 +575,72 @@ fn test_validate_all_builtins_pass() {
             profile.profile.name
         );
     }
+}
+
+// ---------------------------------------------------------------------------
+// Built-in artifact domains
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_builtin_artifacts_count() {
+    let domains = load_builtin_artifacts();
+    assert_eq!(domains.len(), 12);
+}
+
+#[test]
+fn test_builtin_artifact_domain_names() {
+    let domains = load_builtin_artifacts();
+    let names: Vec<&str> = domains.iter().map(|d| d.name.as_str()).collect();
+    assert!(names.contains(&"saved-state"));
+    assert!(names.contains(&"quarantine"));
+    assert!(names.contains(&"recent-items"));
+    assert!(names.contains(&"browser-traces"));
+    assert!(names.contains(&"app-caches"));
+    assert!(names.contains(&"mail"));
+    assert!(names.contains(&"safari"));
+    assert!(names.contains(&"system-logs"));
+    assert!(names.contains(&"telemetry"));
+    assert!(names.contains(&"spotlight"));
+    assert!(names.contains(&"cloudkit-cache"));
+    assert!(names.contains(&"quicklook"));
+}
+
+#[test]
+fn test_builtin_artifacts_all_have_entries() {
+    for domain in load_builtin_artifacts() {
+        assert!(
+            !domain.artifacts.is_empty(),
+            "domain {} should have at least one artifact",
+            domain.name
+        );
+    }
+}
+
+#[test]
+fn test_find_artifact_domain_builtin() {
+    let domains = load_builtin_artifacts();
+    let found = find_artifact_domain("safari", &domains);
+    assert!(found.is_some());
+    assert_eq!(found.unwrap().artifacts.len(), 9);
+}
+
+#[test]
+fn test_find_artifact_builtin() {
+    let domains = load_builtin_artifacts();
+    let result = find_artifact("quarantine-events-db", &domains);
+    assert!(result.is_some());
+    let (domain, artifact) = result.unwrap();
+    assert_eq!(domain.name, "quarantine");
+    assert!(
+        matches!(&artifact.action, ArtifactAction::Path(p) if p.contains("QuarantineEventsV2"))
+    );
+}
+
+#[test]
+fn test_builtin_telemetry_has_command_artifact() {
+    let domains = load_builtin_artifacts();
+    let result = find_artifact("unified-log-erase", &domains);
+    assert!(result.is_some());
+    let (_, artifact) = result.unwrap();
+    assert!(matches!(&artifact.action, ArtifactAction::Command(c) if c.contains("log erase")));
 }

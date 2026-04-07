@@ -17,15 +17,30 @@
 
 ## Service Groups
 
-- 32 named groups — logical bundles like Spotlight, Siri, Telemetry, iCloud Sync, AirDrop, Continuity, Apple Intelligence, each with description and safety tier.
+- 48 named groups — logical bundles like Spotlight, Siri, Telemetry, iCloud Sync, AirDrop, Continuity, Apple Intelligence, Safari, Quarantine, Saved State, Shell History, and more, each with description and safety tier.
 - 3 safety tiers — Recommended (safe to disable), Optional (loses a specific feature), Keep (important for system health).
+- Respawn awareness — groups declare respawn behavior (stays-dead, respawns-launchd, respawns-aggressive) so you know if continuous monitoring is needed.
 - Group commands — groups can define custom shell commands beyond launchctl (e.g., Spotlight runs `mdutil -a -i off`, Time Machine runs `tmutil disable`).
 - Granular exclusions — `--except` flag lets you disable a group while keeping specific services within it.
 
+## Artifact Scrubbing
+
+- 12 artifact domains, 42 named artifacts — structured catalog of privacy-relevant files and directories that accumulate on disk without any associated service.
+- Targets by domain — `scrub saved-state` cleans all window snapshots, `scrub browser-traces` removes Chrome/Firefox/Opera caches, `scrub quarantine` deletes the download history database.
+- Targets by name — `scrub safari-favicon-cache` cleans a single specific artifact.
+- Dry-run with sizes — `scrub --dry-run` previews every path with its disk size before any deletion.
+- Size-aware confirmation — non-dry-run shows total size (e.g., "Will delete ~86.5 MB") and prompts before proceeding.
+- Path safety — all paths are canonicalized and verified against allowed prefixes before deletion, preventing symlink traversal attacks.
+- Process warnings — warns when target applications (Chrome, Firefox, Safari, Spotify, Mail) are running before cleaning their artifacts.
+- `scrub all` — wipes every artifact across all 12 domains in one command, with explicit confirmation showing total size.
+- `scrub --list` — shows all available groups and artifact domains with counts and `[+services]` markers for domains that also have service groups.
+- `scrub --list <target>` — detail view showing individual artifacts with paths, descriptions, and associated service patterns.
+- Service + artifact combo — `scrub safari` runs both service cleanup commands and structured artifact deletion in one invocation.
+
 ## Profiles
 
-- 7 built-in profiles — base, minimal, developer, privacy, airgapped, studio, paranoid.
-- Profile inheritance — profiles extend other profiles (e.g., developer extends minimal extends base), up to 3 levels deep with cycle detection.
+- Privacy profile — built-in profile that blocks telemetry, Siri, AirPlay, Continuity, Sidecar, widget sync, and Universal Control.
+- Profile inheritance — profiles extend other profiles, up to 3 levels deep with cycle detection.
 - Category-level rules — allow, deny, or log-only entire categories (e.g., `telemetry=deny`).
 - Pattern-based rules — allow or deny services by exact label or glob pattern.
 - Enforcement modes — disable (persistent across reboots), kill (immediate termination), or log-only (audit without action).
@@ -60,10 +75,27 @@
 - Rollback — `undo` restores the most recent snapshot or a named one, re-enabling all services that were disabled.
 - Snapshot listing — view all available snapshots sorted chronologically.
 
-## Binary Analysis
+## Device Privacy
 
-- Framework extraction — lists linked frameworks for any service binary via `otool -L`.
-- Telemetry string scan — searches service binaries for 8 known telemetry keywords and Apple analytics domains.
+- Camera & microphone audit — reads the macOS TCC database to show which apps have been granted camera and microphone access.
+- Process cross-referencing — maps TCC authorizations against running processes and macwarden groups.
+- Access revocation — `devices --revoke <bundle-id>` removes camera/microphone authorization for a specific app.
+
+## Network Firewall
+
+- 10 net subcommands — scan, shield, rules, groups, trackers, apps, explain, log, learn, blocklists.
+- Five-tier rule matching — exact deny, exact allow, glob deny, glob allow, default action. First match wins with full transparency.
+- Tracker shield — one-command protection against advertising, analytics, fingerprinting, and social tracking domains across 4 curated categories.
+- 9 network rule groups — pre-built rule sets for browser essentials, communication, development, gaming, iCloud services, location services, macOS system services, media streaming, and productivity.
+- 21 app profiles — per-app classification with expected domains, categories, and breakage risk ratings for fine-grained network policy.
+- GeoIP enrichment — embedded MaxMind databases for country and ASN lookups on every connection.
+- Graylist detection — identifies abusable Apple-signed binaries (shells, curl, python, scripting runtimes) that bypass naive code-signing trust.
+- Essential domain safelist — OCSP, NTP, and system update domains are never blocked, preventing self-inflicted breakage.
+- Domain trie matching — boundary-aware domain pattern matching (blocking `tracker.com` also blocks `sub.tracker.com` but not `mytracker.com`).
+- Connection scanning — shows active network connections with firewall rule evaluation.
+- Rule explanation — `net explain` shows why a specific connection would be allowed or denied.
+- Rule learning — `net learn` watches live connections and suggests firewall rules from observed traffic.
+- Blocklist subscriptions — import external domain blocklists in hosts format or domain-list format.
 
 ## Network Visibility
 
@@ -71,9 +103,60 @@
 - Service cross-referencing — maps network connections from `lsof` back to launchd services and groups.
 - Deduplication — consolidates multiple connections per PID into clean output.
 
+## Endpoint Security
+
+- Real-time network AUTH event interception — intercepts outbound connections via Apple's Endpoint Security framework before they leave the machine.
+- Per-connection allow/deny — each connection is evaluated against the rule engine and responded with allow or deny in real-time.
+- Self-exemption — macwarden automatically mutes its own process to avoid feedback loops.
+- Safety-net deadline — auto-allows connections if rule evaluation takes too long, preventing system hangs.
+
+## Process Monitor
+
+- Code signing verification — validates Apple signatures and third-party code signing identities via Security.framework.
+- Responsible process resolution — traces child processes back to their parent application (e.g., a helper binary back to Chrome).
+- Socket enumeration — lists open network sockets per process for cross-referencing with firewall decisions.
+- Resource usage stats — CPU time, memory footprint, and I/O counters per process via libproc.
+- LRU code signing cache — avoids redundant signature checks for recently verified processes.
+
+## DNS Cache
+
+- Passive DNS cache — maps IP addresses to hostnames from Endpoint Security network events, no active queries needed.
+- LRU eviction — bounded memory usage with configurable capacity.
+- DNS wire parser — RFC 1035 response parser for future BPF/pcap integration on port 53.
+
+## Metrics
+
+- SQLite-backed event store — persists enforcement, network, and sensor events to `~/.macwarden/metrics.db`.
+- 6 event types — service enforcement, network decisions, sensor activations, profile changes, scrub operations, and system events.
+- Time-range queries — retrieve events by time window for dashboards and reporting.
+- Per-app statistics — connection counts, blocked counts, and top domains per application.
+
+## Privacy Score
+
+- 0-100 composite score — weighted aggregate across 4 privacy dimensions: services, traces, devices, and network.
+- Service scoring — measures how many recommended and optional service groups are disabled vs. active.
+- Trace scoring — measures disk footprint of forensic artifacts across 12 artifact domains.
+- Device scoring — counts camera and microphone access grants, penalizes actively running authorized apps.
+- Network scoring — rewards enabled tracker shield, penalizes active tracker connections.
+- Actionable recommendations — each score includes specific macwarden commands to improve it, with estimated point gains.
+
+## Hardware Sensors
+
+- WiFi network detection — reads current SSID, BSSID, channel, noise, and security mode via CoreWLAN.
+- Screen capture monitoring — detects when screen recording is active via IOKit.
+- Power state monitoring — tracks lid open/close and AC/battery transitions via IOKit.
+- Network context aggregation — combines WiFi, Bluetooth, and power state into a single context snapshot.
+- Event debouncing — suppresses repeated sensor alerts within configurable time windows.
+
+## Binary Analysis
+
+- Framework extraction — lists linked frameworks for any service binary via `otool -L`.
+- Telemetry string scan — searches service binaries for 8 known telemetry keywords and Apple analytics domains.
+- Openbinary lookup — hashes a binary, checks the openbinary database, and auto-uploads for behavioral analysis if unknown.
+
 ## CLI
 
-- 9 commands — scan, info, use, block, allow, watch, undo, status, network.
+- 14 commands — scan, info, use, block, allow, watch, scrub, undo, network, devices, net, status, lookup.
 - Scan filtering — filter services by category, show only unknown/uncategorized services, or view by group.
 - Group sorting — sort groups by name, service count, running count, or safety level.
 - Dual output formats — human-readable tables with rounded borders or JSON for scripting.

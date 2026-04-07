@@ -1,193 +1,326 @@
-//! `macwarden status` -- show current macwarden status.
+//! `macwarden status` — privacy posture dashboard with 0-100 score.
+//!
+//! Display-only module. Data collection lives in `status_collect`.
 
 use anyhow::{Context, Result};
 
-use catalog::load_builtin_groups;
-use launchd::{MacOsPlatform, Platform};
-use policy::{ServiceState, resolve_group_services};
-use snapshot::SnapshotStore;
+use policy::score::{
+    self, DeviceState, NetworkState, ScoreBreakdown, ScoreInput, ServiceState, TraceState,
+};
 
-use crate::cli::{self, OutputFormat};
-use crate::commands::enforce;
-use crate::commands::scan::discover_services;
+use crate::cli::OutputFormat;
+use crate::commands::scrub_fs;
+use crate::commands::status_collect::{self, DomainInfo, GroupInfo};
 
 // ---------------------------------------------------------------------------
-// Status output
+// Serialisable JSON envelope
 // ---------------------------------------------------------------------------
 
-/// Serialisable status summary.
+/// Full status output for JSON serialization.
 #[derive(Debug, serde::Serialize)]
-struct StatusReport {
-    active_profile: String,
-    sip_status: String,
-    total_services: usize,
-    running: usize,
-    stopped: usize,
-    disabled: usize,
-    unknown_state: usize,
-    snapshot_dir_exists: bool,
-    last_snapshot: Option<SnapshotInfo>,
-    groups: Vec<GroupSummary>,
+struct StatusJson {
+    score: ScoreBreakdown,
+    recommendations: Vec<score::Recommendation>,
+    raw: RawData,
 }
 
-/// Summary of the most recent snapshot.
+/// Raw collector data for JSON output.
 #[derive(Debug, serde::Serialize)]
-struct SnapshotInfo {
-    timestamp: String,
-    profile_name: String,
-    entry_count: usize,
-}
-
-/// Per-group service summary.
-#[derive(Debug, serde::Serialize)]
-struct GroupSummary {
-    name: String,
-    total: usize,
-    running: usize,
-    disabled: usize,
+struct RawData {
+    services: Option<ServiceState>,
+    traces: Option<TraceState>,
+    devices: Option<DeviceState>,
+    network: Option<NetworkState>,
 }
 
 // ---------------------------------------------------------------------------
-// Command
+// Command entry point
 // ---------------------------------------------------------------------------
 
 /// Run the `status` command.
-///
-/// Displays the active profile, SIP status, service counts by state,
-/// snapshot information, and group summaries.
 pub fn run(format: OutputFormat) -> Result<()> {
-    let active_profile = cli::read_active_profile()?;
-    let services = discover_services()?;
+    let services = status_collect::collect_services();
+    let (traces, domain_infos) = status_collect::collect_traces();
+    let devices = status_collect::collect_devices();
+    let network = Some(status_collect::collect_network());
+    let group_infos = status_collect::collect_group_infos();
 
-    let running = services
-        .iter()
-        .filter(|s| s.state == ServiceState::Running)
-        .count();
-    let stopped = services
-        .iter()
-        .filter(|s| s.state == ServiceState::Stopped)
-        .count();
-    let disabled = services
-        .iter()
-        .filter(|s| s.state == ServiceState::Disabled)
-        .count();
-    let unknown_state = services
-        .iter()
-        .filter(|s| s.state == ServiceState::Unknown)
-        .count();
-
-    // SIP status.
-    let platform = MacOsPlatform::new();
-    let sip_status = match platform.sip_status() {
-        Ok(state) => state.to_string(),
-        Err(_) => "unknown".to_owned(),
+    let input = ScoreInput {
+        services: services.clone(),
+        traces: traces.clone(),
+        devices: devices.clone(),
+        network: network.clone(),
     };
 
-    // Snapshot info.
-    let snap_dir = enforce::snapshot_dir()?;
-    let snapshot_dir_exists = snap_dir.is_dir();
-    let last_snapshot = if snapshot_dir_exists {
-        let store = SnapshotStore::new(snap_dir);
-        match store.latest() {
-            Ok(Some(snap)) => Some(SnapshotInfo {
-                timestamp: snap.timestamp,
-                profile_name: snap.profile_name,
-                entry_count: snap.entries.len(),
-            }),
-            _ => None,
-        }
-    } else {
-        None
-    };
-
-    // Group summaries.
-    let builtin_groups = load_builtin_groups();
-    let groups: Vec<GroupSummary> = builtin_groups
-        .iter()
-        .map(|group| {
-            let matched = resolve_group_services(group, &services);
-            let grp_running = matched
-                .iter()
-                .filter(|s| s.state == ServiceState::Running)
-                .count();
-            let grp_disabled = matched
-                .iter()
-                .filter(|s| s.state == ServiceState::Disabled)
-                .count();
-            GroupSummary {
-                name: group.name.clone(),
-                total: matched.len(),
-                running: grp_running,
-                disabled: grp_disabled,
-            }
-        })
-        .collect();
-
-    let report = StatusReport {
-        active_profile,
-        sip_status,
-        total_services: services.len(),
-        running,
-        stopped,
-        disabled,
-        unknown_state,
-        snapshot_dir_exists,
-        last_snapshot,
-        groups,
-    };
+    let breakdown = score::compute_score(&input);
 
     match format {
-        OutputFormat::Table => print_table(&report),
-        OutputFormat::Json => print_json(&report)?,
+        OutputFormat::Table => {
+            print_dashboard(
+                &breakdown,
+                &group_infos,
+                &domain_infos,
+                devices.as_ref(),
+                network.as_ref(),
+            );
+        }
+        OutputFormat::Json => {
+            print_json(&breakdown, &input)?;
+        }
     }
 
     Ok(())
 }
 
 // ---------------------------------------------------------------------------
-// Table output
+// ANSI colors (matching macdecompile DNA style)
 // ---------------------------------------------------------------------------
 
-/// Print the status report as a human-readable summary.
-fn print_table(report: &StatusReport) {
-    println!("macwarden status\n");
-    println!("  Active profile:   {}", report.active_profile);
-    println!("  SIP status:       {}", report.sip_status);
-    println!("  Total services:   {}", report.total_services);
-    println!("  Running:          {}", report.running);
-    println!("  Stopped:          {}", report.stopped);
-    println!("  Disabled:         {}", report.disabled);
-    println!("  Unknown state:    {}", report.unknown_state);
-    println!(
-        "  Snapshot dir:     {}",
-        if report.snapshot_dir_exists {
-            "exists"
-        } else {
-            "not found"
-        },
-    );
+/// Bold white — section headers.
+const BOLD: &str = "\x1b[1;37m";
+/// Normal white — bar labels, normal items.
+const N: &str = "\x1b[37m";
+/// Red — concerning items (high running count, large traces).
+const RED: &str = "\x1b[31m";
+/// Dim gray — metadata, empty bars, secondary info.
+const DIM: &str = "\x1b[90m";
+/// Green — good state indicators.
+const GRN: &str = "\x1b[32m";
+/// Reset all formatting.
+const RST: &str = "\x1b[0m";
+/// Bar width in characters (matches macdecompile).
+const BAR_W: u32 = 24;
+/// Label width for bar alignment — fits "apple-intelligence" (19) + padding.
+const LABEL_W: usize = 20;
 
-    if let Some(snap) = &report.last_snapshot {
-        println!(
-            "  Last snapshot:    {} (profile: {}, {} entries)",
-            snap.timestamp, snap.profile_name, snap.entry_count,
-        );
-    }
+/// Groups that are genuinely privacy-invasive (shown in red when active).
+const INVASIVE_GROUPS: &[&str] = &[
+    "telemetry",
+    "profiling",
+    "siri",
+    "apple-intelligence",
+    "media-analysis",
+    "location",
+    "screentime",
+];
 
-    if !report.groups.is_empty() {
-        println!("\n  Groups:");
-        for g in &report.groups {
-            println!(
-                "    {:<20} {:>3} total  {:>3} running  {:>3} disabled",
-                g.name, g.total, g.running, g.disabled,
-            );
-        }
-    }
+// ---------------------------------------------------------------------------
+// Table display
+// ---------------------------------------------------------------------------
+
+/// Print the privacy dashboard to stdout.
+fn print_dashboard(
+    breakdown: &ScoreBreakdown,
+    groups: &[GroupInfo],
+    domains: &[DomainInfo],
+    devices: Option<&DeviceState>,
+    network: Option<&NetworkState>,
+) {
+    println!();
+    print_score_header(breakdown);
+    print_services_section(breakdown, groups);
+    print_traces_section(breakdown, domains);
+    print_devices_section(breakdown, devices);
+    print_network_section(breakdown, network);
+    print_recommendations(breakdown);
 }
 
-/// Print the status report as JSON.
-fn print_json(report: &StatusReport) -> Result<()> {
-    let json = serde_json::to_string_pretty(report).context("failed to serialize status")?;
+/// Print a bar with filled/empty blocks.
+fn print_bar(label: &str, value: u32, max: u32, color: &str) {
+    let filled = if max > 0 {
+        (u64::from(value) * u64::from(BAR_W) / u64::from(max)).min(u64::from(BAR_W)) as u32
+    } else {
+        0
+    };
+    let empty = BAR_W - filled;
+    let bar_f: String = "\u{2588}".repeat(filled as usize);
+    let bar_e: String = "\u{2591}".repeat(empty as usize);
+    println!("  {color}{label:<LABEL_W$}{bar_f}{DIM}{bar_e}{RST} {value:>4}");
+}
+
+/// Print the score bar aligned with other sections.
+fn print_score_header(breakdown: &ScoreBreakdown) {
+    let total = breakdown.total;
+    let color = if total >= 70 {
+        GRN
+    } else if total >= 40 {
+        N
+    } else {
+        RED
+    };
+    println!("  {DIM}privacy score based on services, traces, device access, and network{RST}");
+    println!();
+    println!("  {BOLD}SCORE{RST}");
+    print_bar("privacy", total, 100, color);
+    println!();
+}
+
+/// Print the services section — ALL groups with active/disabled status.
+fn print_services_section(breakdown: &ScoreBreakdown, groups: &[GroupInfo]) {
+    println!("  {BOLD}SERVICES{RST}  {DIM}red = tracks your activity{RST}");
+    match &breakdown.services {
+        Some(dim) => {
+            for g in groups {
+                let active = g.running_count > 0;
+                let is_invasive = INVASIVE_GROUPS.iter().any(|&r| r == g.name);
+                let (color, status) = if !active {
+                    (GRN, "disabled".to_owned())
+                } else if is_invasive {
+                    (RED, "active".to_owned())
+                } else {
+                    (N, "active".to_owned())
+                };
+                let filled = if g.total_count > 0 {
+                    (u64::from(g.running_count as u32) * u64::from(BAR_W)
+                        / u64::from(g.total_count as u32))
+                    .min(u64::from(BAR_W)) as u32
+                } else {
+                    0
+                };
+                let empty = BAR_W - filled;
+                let bar_f: String = "\u{2588}".repeat(filled as usize);
+                let bar_e: String = "\u{2591}".repeat(empty as usize);
+                println!(
+                    "  {color}{:<LABEL_W$}{bar_f}{DIM}{bar_e}{RST} {color}{status}{RST}",
+                    g.name
+                );
+            }
+            println!("  {DIM}{}{RST}", dim.label);
+        }
+        None => {
+            println!("  {DIM}unavailable{RST}");
+        }
+    }
+    println!();
+}
+
+/// Print the privacy footprint section with bar charts.
+fn print_traces_section(breakdown: &ScoreBreakdown, domains: &[DomainInfo]) {
+    println!("  {BOLD}PRIVACY FOOTPRINT{RST}  {DIM}files that reveal your activity{RST}");
+    match &breakdown.traces {
+        Some(dim) => {
+            let max_size = domains.first().map_or(1, |d| d.size_bytes.max(1));
+            for d in domains {
+                let size_str = scrub_fs::format_size(d.size_bytes);
+                let ratio = if max_size > 0 {
+                    (d.size_bytes as f64 / max_size as f64 * f64::from(BAR_W)) as u32
+                } else {
+                    0
+                };
+                let filled = ratio.min(BAR_W);
+                let empty = BAR_W - filled;
+                let bar_f: String = "\u{2588}".repeat(filled as usize);
+                let bar_e: String = "\u{2591}".repeat(empty as usize);
+                println!(
+                    "  {N}{:<LABEL_W$}{bar_f}{DIM}{bar_e}{RST} {size_str:>10}",
+                    d.name
+                );
+            }
+            println!("  {DIM}{}{RST}", dim.label);
+        }
+        None => {
+            println!("  {DIM}unavailable{RST}");
+        }
+    }
+    println!();
+}
+
+/// Print the devices section.
+fn print_devices_section(breakdown: &ScoreBreakdown, devices: Option<&DeviceState>) {
+    println!("  {BOLD}DEVICE ACCESS{RST}");
+    match (&breakdown.devices, devices) {
+        (Some(_), Some(d)) => {
+            let cam_color = if d.camera_running > 0 { RED } else { N };
+            let mic_color = if d.mic_running > 0 { RED } else { N };
+            print_bar("camera", d.camera_grants, 10, cam_color);
+            print_bar("microphone", d.mic_grants, 10, mic_color);
+            let running = d.camera_running + d.mic_running;
+            if running > 0 {
+                println!("  {RED}{running} devices actively in use{RST}");
+            }
+        }
+        _ => {
+            println!("  {DIM}unavailable (requires Full Disk Access){RST}");
+        }
+    }
+    println!();
+}
+
+/// Print the network section.
+fn print_network_section(breakdown: &ScoreBreakdown, network: Option<&NetworkState>) {
+    println!("  {BOLD}NETWORK{RST}");
+    match (&breakdown.network, network) {
+        (Some(_), Some(n)) => {
+            let shield_color = if n.shield_enabled { GRN } else { RED };
+            let shield_label = if n.shield_enabled {
+                "enabled"
+            } else {
+                "disabled"
+            };
+            println!(
+                "  {N}{:<LABEL_W$}{shield_color}{shield_label}{RST}",
+                "tracker shield"
+            );
+            let conn_color = if n.tracker_connections == 0 { GRN } else { RED };
+            println!(
+                "  {N}{:<LABEL_W$}{conn_color}{}{RST}",
+                "tracker conns", n.tracker_connections
+            );
+            let net_display = status_collect::collect_network_display();
+            if net_display.listening_ports > 0 {
+                println!(
+                    "  {N}{:<LABEL_W$}{N}{}{RST}",
+                    "listening ports", net_display.listening_ports
+                );
+            }
+            if net_display.outbound_conns > 0 {
+                println!(
+                    "  {N}{:<LABEL_W$}{N}{}{RST}",
+                    "outbound conns", net_display.outbound_conns
+                );
+            }
+        }
+        _ => {
+            println!("  {DIM}unavailable{RST}");
+        }
+    }
+    println!();
+}
+
+/// Print recommendations with honest descriptions.
+fn print_recommendations(breakdown: &ScoreBreakdown) {
+    let recs = breakdown.recommendations();
+    if recs.is_empty() {
+        return;
+    }
+    println!("  {BOLD}RECOMMENDATIONS{RST}  {DIM}(review before running){RST}");
+    for rec in &recs {
+        println!(
+            "  {N}{:<28}{RST} {GRN}+{:<2}{RST} pts   {DIM}{}{RST}",
+            rec.command, rec.points, rec.description,
+        );
+    }
+    println!();
+}
+
+// ---------------------------------------------------------------------------
+// JSON output
+// ---------------------------------------------------------------------------
+
+/// Print the status as JSON.
+fn print_json(breakdown: &ScoreBreakdown, input: &ScoreInput) -> Result<()> {
+    let recs = breakdown.recommendations();
+    let output = StatusJson {
+        score: breakdown.clone(),
+        recommendations: recs,
+        raw: RawData {
+            services: input.services.clone(),
+            traces: input.traces.clone(),
+            devices: input.devices.clone(),
+            network: input.network.clone(),
+        },
+    };
+    let json = serde_json::to_string_pretty(&output).context("failed to serialize status")?;
     println!("{json}");
     Ok(())
 }

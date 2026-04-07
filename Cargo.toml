@@ -6,6 +6,12 @@ members = [
     "crates/launchd",
     "crates/snapshot",
     "crates/sensors",
+    "crates/appdb",
+    "crates/net",
+    "crates/procmon",
+    "crates/es",
+    "crates/metrics",
+    "crates/dns",
 ]
 resolver = "2"
 
@@ -13,7 +19,7 @@ resolver = "2"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.94.0"
-license = "MIT"
+license = "GPL-3.0-only"
 
 [workspace.lints.clippy]
 correctness = { level = "deny", priority = -1 }
@@ -55,6 +61,28 @@ catalog = { path = "crates/catalog" }
 launchd = { path = "crates/launchd" }
 snapshot = { path = "crates/snapshot" }
 sensors = { path = "crates/sensors" }
+appdb = { path = "crates/appdb" }
+net = { path = "crates/net" }
+procmon = { path = "crates/procmon" }
+es = { path = "crates/es" }
+metrics = { path = "crates/metrics" }
+dns = { path = "crates/dns" }
+
+# Database
+rusqlite = { version = "0.35", features = ["bundled"] }
+
+# Networking
+ipnet = { version = "2", features = ["serde"] }
+dns-lookup = "3.0"
+maxminddb = "0.27"
+ureq = { version = "3", features = ["json", "multipart"] }
+
+# Archive extraction
+flate2 = "1.1"
+tar = "0.4"
+
+# Hashing
+sha2 = "0.10"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

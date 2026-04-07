@@ -1,0 +1,61 @@
+[group]
+name = "communication"
+description = "Email, messaging, and video calling infrastructure"
+default_enabled = true
+priority = 12
+
+[[group.rules]]
+name = "iMessage and FaceTime"
+process = "*"
+dest_hosts = [
+    "*.push.apple.com",
+    "ess.apple.com",
+    "ids.apple.com",
+    "idmsa.apple.com",
+]
+action = "allow"
+note = "Required for iMessage delivery and FaceTime calls"
+
+[[group.rules]]
+name = "WhatsApp"
+process = "*"
+dest_hosts = [
+    "whatsapp.net", "*.whatsapp.net",
+    "whatsapp.com", "*.whatsapp.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Signal"
+process = "*"
+dest_hosts = [
+    "signal.org", "*.signal.org",
+    "whispersystems.org", "*.whispersystems.org",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Telegram"
+process = "*"
+dest_hosts = [
+    "telegram.org", "*.telegram.org",
+    "t.me",
+    "telegram.me",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Email relay"
+process = "*"
+dest_hosts = [
+    "smtp.gmail.com",
+    "imap.gmail.com",
+    "smtp.mail.me.com",
+    "imap.mail.me.com",
+    "smtp.office365.com",
+    "outlook.office365.com",
+    "imap-mail.outlook.com",
+    "smtp-mail.outlook.com",
+]
+action = "allow"
+note = "Common SMTP and IMAP endpoints for major email providers"

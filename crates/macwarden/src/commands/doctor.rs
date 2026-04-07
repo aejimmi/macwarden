@@ -53,7 +53,7 @@ fn check_plist_dirs() -> Result<()> {
 
 /// Check that the config directory exists.
 fn check_config_dir() -> Result<()> {
-    let config_dir = cli::expand_home("~/.config/macwarden")?;
+    let config_dir = cli::expand_home("~/.macwarden")?;
     let exists = config_dir.is_dir();
     print_status(exists, &format!("config dir: {}", config_dir.display()));
     Ok(())
@@ -74,7 +74,7 @@ fn check_active_profile() -> Result<()> {
 
 /// Check that the snapshot directory exists.
 fn check_snapshot_dir() -> Result<()> {
-    let snap_dir = cli::expand_home("~/.local/share/macwarden/snapshots")?;
+    let snap_dir = cli::expand_home("~/.macwarden/snapshots")?;
     let exists = snap_dir.is_dir();
     print_status(exists, &format!("snapshot dir: {}", snap_dir.display()));
     Ok(())

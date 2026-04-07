@@ -26,5 +26,7 @@ pub mod plist_parser;
 pub use annotation::{AnnotationDb, ServiceAnnotation};
 pub use discovery::{DEFAULT_PLIST_DIRS, annotate_services, discover_plists};
 pub use error::CatalogError;
-pub use loader::{load_builtin_annotations, load_builtin_groups, load_builtin_profiles};
+pub use loader::{
+    load_builtin_annotations, load_builtin_artifacts, load_builtin_groups, load_builtin_profiles,
+};
 pub use plist_parser::{PlistInfo, parse_plist};

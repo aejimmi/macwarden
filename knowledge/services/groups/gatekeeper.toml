@@ -1,0 +1,9 @@
+[group]
+name = "gatekeeper"
+description = "Gatekeeper and XProtect execution history — every executable ever assessed or run"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -f /var/db/SystemPolicy",
+    "rm -f /var/db/SystemPolicyConfiguration/ExecPolicy",
+]

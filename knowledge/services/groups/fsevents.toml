@@ -1,0 +1,9 @@
+[group]
+name = "fsevents"
+description = "Filesystem event journal — records every file creation, modification, and deletion on every volume"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -rf /.fseventsd/",
+    "rm -rf /System/Volumes/Data/.fseventsd/",
+]

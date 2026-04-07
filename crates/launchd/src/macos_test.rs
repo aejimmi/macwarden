@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing, clippy::panic)]
+
 use super::*;
 
 #[test]
@@ -141,11 +143,11 @@ fn test_parse_launchctl_print_running_service() {
     assert_eq!(detail.mach_services[0], "com.apple.assistant_cdmd");
 }
 
-const FIXTURE_STOPPED: &str = r#"gui/501/com.apple.example = {
+const FIXTURE_STOPPED: &str = r"gui/501/com.apple.example = {
 	state = waiting
 	program = /usr/bin/example
 	exit timeout = 30
-}"#;
+}";
 
 #[test]
 fn test_parse_launchctl_print_stopped_service() {

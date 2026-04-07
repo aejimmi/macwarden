@@ -1,0 +1,15 @@
+[group]
+name = "spotlight"
+description = "Spotlight search and metadata indexing"
+safety = "optional"
+respawn_behavior = "respawns-launchd"
+patterns = [
+    "com.apple.Spotlight",
+    "com.apple.metadata.mds*",
+    "com.apple.corespotlight*",
+    "com.apple.metadata.md*",
+    "com.apple.spotlightknowledge*",
+    "com.apple.managedcorespotlight*",
+]
+disable_commands = ["mdutil -a -i off", "mdutil -i off /System/Volumes/Data"]
+enable_commands = ["mdutil -a -i on"]

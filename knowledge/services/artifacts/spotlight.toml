@@ -1,0 +1,14 @@
+[domain]
+name = "spotlight"
+description = "Spotlight search index and metadata caches"
+safety = "optional"
+
+[[artifact]]
+name = "spotlight-index"
+path = "/System/Volumes/Data/.Spotlight-V100"
+description = "Main Spotlight index volume (rebuilt automatically)"
+
+[[artifact]]
+name = "corespotlight-metadata"
+path = "~/Library/Metadata/CoreSpotlight/"
+description = "Per-app CoreSpotlight index data"

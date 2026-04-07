@@ -1,0 +1,8 @@
+[group]
+name = "document-versions"
+description = "macOS auto-saved document revisions — prior versions of every document edited"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -rf ~/.DocumentRevisions-V100/",
+]

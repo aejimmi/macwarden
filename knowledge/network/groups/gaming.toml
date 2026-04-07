@@ -1,0 +1,61 @@
+[group]
+name = "gaming"
+description = "Game platforms, stores, and multiplayer services"
+default_enabled = false
+priority = 25
+
+[[group.rules]]
+name = "Steam"
+process = "*"
+dest_hosts = [
+    "steampowered.com", "*.steampowered.com",
+    "steamcommunity.com", "*.steamcommunity.com",
+    "steamstatic.com", "*.steamstatic.com",
+    "steamcdn-a.akamaihd.net",
+    "steamcontent.com", "*.steamcontent.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Epic Games"
+process = "*"
+dest_hosts = [
+    "epicgames.com", "*.epicgames.com",
+    "unrealengine.com", "*.unrealengine.com",
+    "ol.epicgames.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Apple Game Center"
+process = "*"
+dest_hosts = ["gc.apple.com", "*.gc.apple.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Xbox and Microsoft gaming"
+process = "*"
+dest_hosts = [
+    "xbox.com", "*.xbox.com",
+    "xboxlive.com", "*.xboxlive.com",
+    "xboxservices.com", "*.xboxservices.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "GOG"
+process = "*"
+dest_hosts = ["gog.com", "*.gog.com", "gogalaxy.com", "*.gogalaxy.com"]
+action = "allow"
+
+[[group.rules]]
+name = "EA and Origin"
+process = "*"
+dest_hosts = ["ea.com", "*.ea.com", "origin.com", "*.origin.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Battle.net"
+process = "*"
+dest_hosts = ["battle.net", "*.battle.net", "blizzard.com", "*.blizzard.com"]
+action = "allow"

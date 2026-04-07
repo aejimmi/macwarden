@@ -1,0 +1,5 @@
+code_id = "com.apple.mail"
+name = "Mail"
+developer = "Apple Inc."
+category = "communication"
+description = "Apple's built-in email client"

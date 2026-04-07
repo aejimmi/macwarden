@@ -1,0 +1,71 @@
+[group]
+name = "media-streaming"
+description = "Music, video, and podcast streaming services"
+default_enabled = false
+priority = 25
+
+[[group.rules]]
+name = "Spotify"
+process = "*"
+dest_hosts = [
+    "spotify.com", "*.spotify.com",
+    "scdn.co", "*.scdn.co",
+    "spotifycdn.com", "*.spotifycdn.com",
+    "audio-sp-*.spotifycdn.net",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Netflix"
+process = "*"
+dest_hosts = [
+    "netflix.com", "*.netflix.com",
+    "nflxvideo.net", "*.nflxvideo.net",
+    "nflxso.net", "*.nflxso.net",
+    "nflximg.net", "*.nflximg.net",
+    "nflxext.com", "*.nflxext.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "YouTube"
+process = "*"
+dest_hosts = [
+    "youtube.com", "*.youtube.com",
+    "googlevideo.com", "*.googlevideo.com",
+    "ytimg.com", "*.ytimg.com",
+    "youtu.be",
+    "yt3.ggpht.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Apple Music and iTunes"
+process = "*"
+dest_hosts = [
+    "music.apple.com",
+    "itunes.apple.com",
+    "audio.itunes.apple.com",
+    "play.itunes.apple.com",
+    "aod.itunes.apple.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Twitch"
+process = "*"
+dest_hosts = [
+    "twitch.tv", "*.twitch.tv",
+    "ttvnw.net", "*.ttvnw.net",
+    "jtvnw.net", "*.jtvnw.net",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Apple Podcasts"
+process = "*"
+dest_hosts = [
+    "podcasts.apple.com",
+    "podcastsconnect.apple.com",
+]
+action = "allow"

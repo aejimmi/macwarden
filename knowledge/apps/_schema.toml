@@ -1,0 +1,30 @@
+# App profile template — copy this file and fill in the fields.
+#
+# Required:
+#   code_id  — Code signing identity (e.g. "com.apple.Safari")
+#   name     — Human-readable app name
+#
+# Optional:
+#   developer    — Publisher / developer name
+#   category     — One of: browser, communication, productivity, media,
+#                  design, development, cloud, system, security, gaming, utility
+#   description  — What the app does (one sentence)
+#
+# Optional network connections (repeat [[connections]] for each domain):
+#   [[connections]]
+#   host      — Domain the app connects to
+#   purpose   — Why it connects (updates, sync, telemetry, etc.)
+#   if_denied — What breaks if you block this connection
+#   risk      — Breakage severity: "none", "degraded", or "critical"
+
+code_id = "com.example.app"
+name = "Example App"
+# developer = "Example Corp."
+# category = "utility"
+# description = "Does something useful"
+
+# [[connections]]
+# host = "example.com"
+# purpose = "Account sync and update checks"
+# if_denied = "Cannot sync data or check for updates"
+# risk = "degraded"

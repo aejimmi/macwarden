@@ -1,0 +1,24 @@
+[domain]
+name = "saved-state"
+description = "Window snapshots every app leaves behind at quit"
+safety = "recommended"
+
+[[artifact]]
+name = "saved-state-all"
+path = "~/Library/Saved Application State/"
+description = "Window snapshots for all applications"
+
+[[artifact]]
+name = "saved-state-chrome"
+path = "~/Library/Saved Application State/com.google.Chrome.savedState/"
+description = "Chrome window snapshots"
+
+[[artifact]]
+name = "saved-state-firefox"
+path = "~/Library/Saved Application State/org.mozilla.firefox.savedState/"
+description = "Firefox window snapshots"
+
+[[artifact]]
+name = "saved-state-safari"
+path = "~/Library/Saved Application State/com.apple.Safari.savedState/"
+description = "Safari window snapshots"

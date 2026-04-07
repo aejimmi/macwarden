@@ -1,0 +1,5 @@
+code_id = "com.apple.Terminal"
+name = "Terminal"
+developer = "Apple Inc."
+category = "development"
+description = "Apple's built-in terminal emulator"

@@ -260,7 +260,7 @@ fn test_write_snapshot_creates_file() {
     let result = write_snapshot("test-profile", &targets);
     assert!(result.is_ok(), "write_snapshot failed: {result:?}");
 
-    let snap_dir = tmp.path().join(".local/share/macwarden/snapshots");
+    let snap_dir = tmp.path().join(".macwarden/snapshots");
     assert!(snap_dir.exists(), "snapshot directory not created");
 
     let files: Vec<_> = std::fs::read_dir(&snap_dir)

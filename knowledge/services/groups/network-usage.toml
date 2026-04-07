@@ -1,0 +1,13 @@
+[group]
+name = "network-usage"
+description = "Per-process network usage statistics — which apps talked to the internet, how much, when"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -f /private/var/networkd/netusage.sqlite",
+    "rm -f /private/var/networkd/netusage.sqlite-shm",
+    "rm -f /private/var/networkd/netusage.sqlite-wal",
+    "rm -f /private/var/networkd/db/netusage.sqlite",
+    "rm -f /private/var/networkd/db/netusage.sqlite-shm",
+    "rm -f /private/var/networkd/db/netusage.sqlite-wal",
+]

@@ -1,0 +1,47 @@
+[group]
+name = "location"
+description = "Location services -- GPS/WiFi/cell positioning, geofencing, routine learning, Find My relay. Shared iPhone/Mac codebase; most subsystems dormant on desktop. Useful for: Find My Mac, auto-timezone, Maps, weather. Not needed for: general desktop use without location-aware apps."
+safety = "keep"
+respawn_behavior = "respawns-launchd"
+patterns = [
+    "com.apple.locationd",
+    "com.apple.CoreLocationAgent",
+    "com.apple.geod",
+    "com.apple.geodMachServiceBridge",
+    "com.apple.routined",
+    "com.apple.locationaccessstored",
+]
+
+# What locationd connects to (extracted via macdecompile static analysis):
+#
+# CRITICAL (positioning breaks without these):
+#   gsp10-ssl.apple.com      — GeoServices API: /au, /pds/pd, /hcy/pbcwloc, /incs, /pbu, /psr, /hvr/trc, /hvr/ion
+#   gsp10-ssl.ls.apple.com   — GeoServices API: /hvr/aploc
+#   gsp10-carry.ls.apple.com — GeoServices API: /hvr/alt
+#   gs-loc.apple.com         — WiFi location lookup: /clls/wloc
+#
+# DEGRADED (offline data goes stale):
+#   cl2.apple.com            — CoreLocation backend cluster (tile/data APIs, versioned)
+#   cl3.apple.com
+#   cl4.apple.com
+#   cl5.apple.com
+#   corelocation.s3.amazonaws.com — Location tile resources on AWS S3: /tr/v1
+#   iphone-ld.apple.com      — Device location data sync (Find My)
+#   configuration.apple.com  — Service configuration download
+#
+# SAFE TO BLOCK (telemetry/studies):
+#   ingest.apple-studies.com     — Opt-in research studies data upload
+#   ingest.stg.apple-studies.com — Staging environment for studies
+#
+# Also observed in binary:
+#   100.6.27.35              — Hardcoded IP (Apple internal or fallback)
+#   macosx26.1.internal      — Apple internal build hostname (compile-time artifact)
+#   localhost:8008           — Debug server (disabled in production builds)
+
+cleanup_commands = [
+    "rm -rf ~/Library/Caches/com.apple.routined/",
+    "rm -f /private/var/db/locationd/clients.plist",
+    "rm -f /private/var/db/locationd/consolidated.db",
+    "rm -f /private/var/db/locationd/consolidated.db-shm",
+    "rm -f /private/var/db/locationd/consolidated.db-wal",
+]

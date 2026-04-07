@@ -1,0 +1,7 @@
+[group]
+name = "quicklook"
+description = "File preview thumbnail cache — stores rendered thumbnails of every previewed file"
+safety = "optional"
+patterns = [
+    "com.apple.quicklook*",
+]

@@ -1,0 +1,18 @@
+[group]
+name = "system-logging"
+description = "Powers `log show/stream` and Console.app. Most users should keep this"
+safety = "keep"
+patterns = [
+    "com.apple.diagnosticd",
+]
+cleanup_commands = [
+    "rm -rf /private/var/db/diagnostics/Persist/",
+    "rm -rf /private/var/db/diagnostics/Special/",
+    "rm -rf /private/var/db/diagnostics/Signpost/",
+    "rm -rf /private/var/db/uuidtext/",
+    "rm -rf /var/log/asl/",
+    "rm -f /var/log/system.log",
+    "rm -f /var/log/wifi.log",
+    "rm -f /var/log/appfirewall.log",
+    "rm -rf /private/var/log/powermanagement/",
+]

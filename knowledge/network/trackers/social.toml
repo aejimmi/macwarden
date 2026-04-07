@@ -1,0 +1,259 @@
+[tracker_category]
+name = "Social"
+description = "Social media tracking pixels, share buttons, login widgets"
+default_enabled = true
+
+[[tracker_category.domains]]
+pattern = "connect.facebook.net"
+description = "Facebook Connect SDK"
+breakage_risk = "degraded"
+note = "Some sites require this for Facebook login"
+
+[[tracker_category.domains]]
+pattern = "platform.twitter.com"
+description = "Twitter/X Platform Widgets"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "platform.linkedin.com"
+description = "LinkedIn Platform Widgets"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "static.ads-twitter.com"
+description = "Twitter/X Ad Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "snap.licdn.com"
+description = "LinkedIn Insight Tag"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pixel.facebook.com"
+description = "Facebook Tracking Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "analytics.pinterest.com"
+description = "Pinterest Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ct.pinterest.com"
+description = "Pinterest Conversion Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "analytics.tiktok.com"
+description = "TikTok Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ads.tiktok.com"
+description = "TikTok Ad Tracking"
+breakage_risk = "none"
+
+# --- New domains below ---
+
+[[tracker_category.domains]]
+pattern = "graph.facebook.com"
+description = "Facebook Graph API Tracking"
+breakage_risk = "degraded"
+note = "Used by apps for Facebook login and data access"
+
+[[tracker_category.domains]]
+pattern = "pixel.wp.com"
+description = "WordPress.com Tracking Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "stats.wp.com"
+description = "WordPress.com Stats"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pixel.quantserve.com"
+description = "Quantcast Social Tracking Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "t.co"
+description = "Twitter/X Link Tracking"
+breakage_risk = "degraded"
+note = "Link shortener; blocking prevents following t.co links"
+
+[[tracker_category.domains]]
+pattern = "syndication.twitter.com"
+description = "Twitter/X Embedded Content"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "analytics.twitter.com"
+description = "Twitter/X Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "widgets.pinterest.com"
+description = "Pinterest Widgets"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "trk.pinterest.com"
+description = "Pinterest Link Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "log.pinterest.com"
+description = "Pinterest Logging"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pixel.reddit.com"
+description = "Reddit Conversion Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "events.reddit.com"
+description = "Reddit Event Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "alb.reddit.com"
+description = "Reddit Ad Load Balancer"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "tr.snapchat.com"
+description = "Snapchat Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sc-static.net"
+description = "Snapchat Static Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pixel.snapchat.com"
+description = "Snapchat Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ads.snapchat.com"
+description = "Snapchat Ads Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "business-api.tiktok.com"
+description = "TikTok Business API"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "mon.tiktok.com"
+description = "TikTok Monitoring"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "log.tiktokv.com"
+description = "TikTok Video Logging"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ads-api.twitter.com"
+description = "Twitter/X Ads API"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "linkedin.com"
+description = "LinkedIn Tracking and Analytics"
+breakage_risk = "none"
+note = "Tracking endpoints on linkedin.com; the main site is a separate concern"
+
+[[tracker_category.domains]]
+pattern = "px.ads.linkedin.com"
+description = "LinkedIn Ads Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "dc.ads.linkedin.com"
+description = "LinkedIn Ads Data Collection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "licdn.com"
+description = "LinkedIn CDN Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "web.facebook.com"
+description = "Facebook Web Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "an.facebook.com"
+description = "Facebook Audience Network"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pixel.adsafeprotected.com"
+description = "IAS Social Verification Pixel"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "fbcdn.net"
+description = "Facebook CDN Tracking"
+breakage_risk = "degraded"
+note = "Serves tracking scripts alongside content"
+
+[[tracker_category.domains]]
+pattern = "instagram.com"
+description = "Instagram Tracking Endpoints"
+breakage_risk = "none"
+note = "Tracking pixels and embed tracking on instagram.com"
+
+[[tracker_category.domains]]
+pattern = "cdninstagram.com"
+description = "Instagram CDN Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "threads.net"
+description = "Threads Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "tumblr.com"
+description = "Tumblr Social Tracking"
+breakage_risk = "none"
+note = "Embedded tracking widgets and share buttons"
+
+[[tracker_category.domains]]
+pattern = "assets.tumblr.com"
+description = "Tumblr Tracking Assets"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "widgets.outbrain.com"
+description = "Outbrain Social Recommendation Widget"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "addthis.com"
+description = "AddThis Social Share Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "addtoany.com"
+description = "AddToAny Share Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sharethis.com"
+description = "ShareThis Social Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "disqus.com"
+description = "Disqus Comment Tracking"
+breakage_risk = "degraded"
+note = "Blocking removes Disqus comment sections from sites"

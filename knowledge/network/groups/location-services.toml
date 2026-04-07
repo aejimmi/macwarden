@@ -1,0 +1,67 @@
+[group]
+name = "location-services"
+description = "Apple location services. Deny by default -- most Mac users don't need location phoning home. Enable specific rules only if you use Find My Mac, Apple Maps, or location-aware apps. Endpoints extracted via macdecompile static analysis of /usr/libexec/locationd (macOS 26.1)."
+default_enabled = true
+priority = 10
+
+# --- Core positioning (enable ONLY if you need location services) ---
+
+[[group.rules]]
+name = "GeoServices API"
+process = "com.apple.locationd"
+dest_hosts = ["gsp10-ssl.apple.com", "gsp10-ssl.ls.apple.com", "gsp10-carry.ls.apple.com"]
+action = "deny"
+note = "Assisted GPS and WiFi positioning. 7+ API paths. Without this, location falls back to raw GPS only (slower, no indoor). Allow if you need Find My Mac or location-aware apps."
+
+[[group.rules]]
+name = "WiFi location lookup"
+process = "com.apple.locationd"
+dest_hosts = ["gs-loc.apple.com"]
+action = "deny"
+note = "Resolves WiFi access points to coordinates via /clls/wloc. Primary indoor positioning. Allow only if you need precise indoor location."
+
+[[group.rules]]
+name = "CoreLocation tile cluster"
+process = "com.apple.locationd"
+dest_hosts = ["cl2.apple.com", "cl3.apple.com", "cl4.apple.com", "cl5.apple.com"]
+action = "deny"
+note = "Location reference data downloads. Allow if you use Apple Maps."
+
+[[group.rules]]
+name = "Location tiles on AWS"
+process = "com.apple.locationd"
+dest_hosts = ["corelocation.s3.amazonaws.com"]
+action = "deny"
+note = "Same tile data as cl2-cl5, hosted on S3. Allow if you use Apple Maps."
+
+[[group.rules]]
+name = "Find My Mac"
+process = "com.apple.locationd"
+dest_hosts = ["iphone-ld.apple.com"]
+action = "deny"
+note = "Device location sync for Find My. Allow ONLY if you rely on Find My Mac for theft recovery."
+
+[[group.rules]]
+name = "Service configuration"
+process = "com.apple.locationd"
+dest_hosts = ["configuration.apple.com"]
+action = "deny"
+note = "Server-side config download. locationd uses compiled defaults without it. Safe to block."
+
+# --- GeoServices daemon (Maps) ---
+
+[[group.rules]]
+name = "Maps and geocoding"
+process = "com.apple.geod"
+dest_hosts = ["gsp10-ssl.apple.com", "gs-loc.apple.com", "cl2.apple.com", "cl3.apple.com", "cl4.apple.com", "cl5.apple.com"]
+action = "deny"
+note = "Map tiles and address lookups. Allow only if you use Apple Maps."
+
+# --- Telemetry and studies ---
+
+[[group.rules]]
+name = "Research studies ingest"
+process = "com.apple.locationd"
+dest_hosts = ["ingest.apple-studies.com", "ingest.stg.apple-studies.com"]
+action = "deny"
+note = "Opt-in research data upload. No reason to allow this."

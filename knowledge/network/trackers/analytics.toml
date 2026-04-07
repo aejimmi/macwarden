@@ -1,0 +1,330 @@
+[tracker_category]
+name = "Analytics"
+description = "Usage analytics, telemetry, crash reporting, A/B testing"
+default_enabled = true
+
+[[tracker_category.domains]]
+pattern = "google-analytics.com"
+description = "Google Analytics"
+breakage_risk = "degraded"
+note = "Some sites use GA for core functionality"
+
+[[tracker_category.domains]]
+pattern = "mixpanel.com"
+description = "Mixpanel Product Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "segment.io"
+description = "Segment Customer Data Platform"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "amplitude.com"
+description = "Amplitude Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "heap.io"
+description = "Heap Product Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "hotjar.com"
+description = "Hotjar Heatmaps and Session Recording"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "fullstory.com"
+description = "FullStory Session Replay"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "mouseflow.com"
+description = "Mouseflow Session Replay"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sentry.io"
+description = "Sentry Crash Reporting"
+breakage_risk = "degraded"
+note = "Blocking will not break apps but developers will not receive crash reports"
+
+[[tracker_category.domains]]
+pattern = "crashlytics.com"
+description = "Firebase Crashlytics"
+breakage_risk = "degraded"
+note = "Crash reporting service used by many mobile apps"
+
+[[tracker_category.domains]]
+pattern = "appsflyer.com"
+description = "AppsFlyer Attribution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adjust.com"
+description = "Adjust Mobile Attribution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "branch.io"
+description = "Branch Deep Linking and Attribution"
+breakage_risk = "degraded"
+note = "Some apps use Branch for deep link routing"
+
+[[tracker_category.domains]]
+pattern = "flurry.com"
+description = "Flurry Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "newrelic.com"
+description = "New Relic APM"
+breakage_risk = "none"
+
+# --- New domains below ---
+
+[[tracker_category.domains]]
+pattern = "analytics.google.com"
+description = "Google Analytics 4"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "googletagmanager.com"
+description = "Google Tag Manager"
+breakage_risk = "degraded"
+note = "Some sites depend on GTM for page functionality"
+
+[[tracker_category.domains]]
+pattern = "googletagservices.com"
+description = "Google Tag Services"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "stats.g.doubleclick.net"
+description = "Google Stats Collection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ssl.google-analytics.com"
+description = "Google Analytics SSL Endpoint"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "app-measurement.com"
+description = "Firebase App Measurement"
+breakage_risk = "degraded"
+note = "Firebase analytics SDK endpoint used by many mobile apps"
+
+[[tracker_category.domains]]
+pattern = "firebase-settings.crashlytics.com"
+description = "Firebase Crashlytics Settings"
+breakage_risk = "degraded"
+note = "Configuration endpoint for Crashlytics SDK"
+
+[[tracker_category.domains]]
+pattern = "kissmetrics.com"
+description = "Kissmetrics Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pendo.io"
+description = "Pendo Product Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "walkme.com"
+description = "WalkMe Digital Adoption"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "matomo.cloud"
+description = "Matomo Cloud Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "countly.com"
+description = "Countly Product Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "smartlook.com"
+description = "Smartlook Session Replay"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "logrocket.com"
+description = "LogRocket Session Replay"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "inspectlet.com"
+description = "Inspectlet Session Recording"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "crazyegg.com"
+description = "Crazy Egg Heatmaps"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "luckyorange.com"
+description = "Lucky Orange Session Replay"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "clicktale.net"
+description = "Clicktale Session Replay"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "optimizely.com"
+description = "Optimizely A/B Testing"
+breakage_risk = "degraded"
+note = "May alter page content if used for feature flags"
+
+[[tracker_category.domains]]
+pattern = "launchdarkly.com"
+description = "LaunchDarkly Feature Flags"
+breakage_risk = "degraded"
+note = "Feature flag service; blocking may disable features in some apps"
+
+[[tracker_category.domains]]
+pattern = "split.io"
+description = "Split Feature Flags"
+breakage_risk = "degraded"
+note = "Feature flag and experimentation platform"
+
+[[tracker_category.domains]]
+pattern = "statsig.com"
+description = "Statsig Feature Flags and Analytics"
+breakage_risk = "degraded"
+note = "Feature gating and analytics platform"
+
+[[tracker_category.domains]]
+pattern = "bugsnag.com"
+description = "Bugsnag Error Monitoring"
+breakage_risk = "degraded"
+note = "Error reporting; blocking will not break apps"
+
+[[tracker_category.domains]]
+pattern = "raygun.com"
+description = "Raygun Crash Reporting"
+breakage_risk = "degraded"
+note = "Error and crash reporting service"
+
+[[tracker_category.domains]]
+pattern = "rollbar.com"
+description = "Rollbar Error Tracking"
+breakage_risk = "degraded"
+note = "Error tracking and monitoring service"
+
+[[tracker_category.domains]]
+pattern = "datadoghq.com"
+description = "Datadog RUM and Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "nr-data.net"
+description = "New Relic Browser Agent"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "bam.nr-data.net"
+description = "New Relic Browser Monitoring"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "dynatrace.com"
+description = "Dynatrace RUM"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "omtrdc.net"
+description = "Adobe Analytics Collection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "2o7.net"
+description = "Adobe Analytics Legacy"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sc.omtrdc.net"
+description = "Adobe Analytics Secure Collection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "chartbeat.com"
+description = "Chartbeat Real-Time Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "chartbeat.net"
+description = "Chartbeat Analytics CDN"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "parsely.com"
+description = "Parse.ly Content Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "scorecardresearch.com"
+description = "comScore ScorecardResearch"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "quantserve.com"
+description = "Quantcast Audience Measurement"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "quantcount.com"
+description = "Quantcast Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "comscore.com"
+description = "comScore Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "braze.com"
+description = "Braze Customer Engagement"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ab-tasty.com"
+description = "AB Tasty A/B Testing"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "vwo.com"
+description = "VWO A/B Testing"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "kochava.com"
+description = "Kochava Mobile Attribution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "singular.net"
+description = "Singular Attribution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "tealiumiq.com"
+description = "Tealium Tag Management"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "tiqcdn.com"
+description = "Tealium CDN"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "segment.com"
+description = "Segment Analytics CDN"
+breakage_risk = "none"

@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing, clippy::panic)]
+
 use super::*;
 
 fn sample_services() -> Vec<LaunchctlEntry> {

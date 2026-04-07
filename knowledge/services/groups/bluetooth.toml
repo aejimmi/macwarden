@@ -1,0 +1,14 @@
+[group]
+name = "bluetooth"
+description = "Bluetooth services"
+safety = "keep"
+patterns = [
+    "com.apple.bluetooth*",
+    "com.apple.BTServer*",
+    "com.apple.BluetoothUIService",
+]
+cleanup_commands = [
+    "rm -f /Library/Bluetooth/com.apple.MobileBluetooth.ledevices.other.db",
+    "rm -f /Library/Bluetooth/com.apple.MobileBluetooth.ledevices.other.db-shm",
+    "rm -f /Library/Bluetooth/com.apple.MobileBluetooth.ledevices.other.db-wal",
+]

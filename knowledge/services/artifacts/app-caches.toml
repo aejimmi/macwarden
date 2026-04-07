@@ -1,0 +1,19 @@
+[domain]
+name = "app-caches"
+description = "Application-specific caches that trade disk space for convenience"
+safety = "optional"
+
+[[artifact]]
+name = "spotify-persistent-cache"
+path = "~/Library/Caches/com.spotify.client/PersistentCache/"
+description = "Spotify offline music and podcast cache"
+
+[[artifact]]
+name = "telegram-cache"
+path = "~/Library/Caches/ru.keepcoder.Telegram/"
+description = "Telegram media and message cache"
+
+[[artifact]]
+name = "deezer-cache"
+path = "~/Library/Caches/com.deezer.deezer-desktop/"
+description = "Deezer music streaming cache"

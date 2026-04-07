@@ -1,0 +1,23 @@
+[group]
+name = "browser-essentials"
+description = "CDNs, certificate validation, safe browsing"
+default_enabled = true
+priority = 15
+
+[[group.rules]]
+name = "OCSP certificate checking"
+process = "*"
+dest_hosts = ["ocsp.digicert.com", "ocsp.sectigo.com", "ocsp.globalsign.com", "ocsp.pki.goog"]
+action = "allow"
+
+[[group.rules]]
+name = "Common CDNs"
+process = "*"
+dest_hosts = ["cdnjs.cloudflare.com", "cdn.jsdelivr.net", "unpkg.com", "ajax.googleapis.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Google Safe Browsing"
+process = "*"
+dest_hosts = ["safebrowsing.googleapis.com"]
+action = "allow"

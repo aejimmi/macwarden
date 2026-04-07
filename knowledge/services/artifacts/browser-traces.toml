@@ -1,0 +1,34 @@
+[domain]
+name = "browser-traces"
+description = "Browser caches and temporary data that persist after browsing"
+safety = "recommended"
+
+[[artifact]]
+name = "chrome-service-worker-cache"
+path = "~/Library/Application Support/Google/Chrome/Default/Service Worker/CacheStorage/"
+description = "Chrome Service Worker cache (offline page data)"
+
+[[artifact]]
+name = "chrome-gpu-cache"
+path = "~/Library/Application Support/Google/Chrome/Default/GPUCache/"
+description = "Chrome GPU shader compilation cache"
+
+[[artifact]]
+name = "chrome-shader-cache"
+path = "~/Library/Application Support/Google/Chrome/ShaderCache/"
+description = "Chrome shader cache"
+
+[[artifact]]
+name = "firefox-crash-reports"
+path = "~/Library/Application Support/Firefox/Crash Reports/"
+description = "Firefox crash report submissions"
+
+[[artifact]]
+name = "firefox-shader-cache"
+path = "~/Library/Caches/Mozilla/Firefox/"
+description = "Firefox shader and startup caches"
+
+[[artifact]]
+name = "opera-saved-state"
+path = "~/Library/Saved Application State/com.operasoftware.Opera.savedState/"
+description = "Opera browser window snapshots"

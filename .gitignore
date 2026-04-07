@@ -11,3 +11,8 @@ AGENTS.md
 AGENTS-CONTEXT.md
 vendors/
 /vendors/
+
+TODO-*
+
+# GeoIP databases (EULA prohibits redistribution)
+*.mmdb

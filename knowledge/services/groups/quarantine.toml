@@ -1,0 +1,5 @@
+[group]
+name = "quarantine"
+description = "Download origin tracking — logs every file downloaded with source URL and timestamp"
+safety = "recommended"
+patterns = []

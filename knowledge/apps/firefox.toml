@@ -1,0 +1,5 @@
+code_id = "org.mozilla.firefox"
+name = "Firefox"
+developer = "Mozilla Foundation"
+category = "browser"
+description = "Open-source web browser focused on privacy"

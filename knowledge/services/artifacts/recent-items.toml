@@ -1,0 +1,34 @@
+[domain]
+name = "recent-items"
+description = "Recently opened files, apps, and servers tracked by macOS"
+safety = "recommended"
+
+[[artifact]]
+name = "recent-shared-file-lists"
+path = "~/Library/Application Support/com.apple.sharedfilelist/"
+description = "Shared file list SFL2 databases for recent documents, apps, and servers"
+
+[[artifact]]
+name = "recent-items-plist"
+path = "~/Library/Preferences/com.apple.recentitems.plist"
+description = "Legacy recent items preference list"
+
+[[artifact]]
+name = "recent-finder-plist"
+path = "~/Library/Preferences/com.apple.finder.plist"
+description = "Finder recent folders and sidebar items"
+
+[[artifact]]
+name = "recent-dock-plist"
+path = "~/Library/Preferences/com.apple.dock.plist"
+description = "Dock recent applications and documents"
+
+[[artifact]]
+name = "recent-sidebar-plist"
+path = "~/Library/Preferences/com.apple.sidebarlists.plist"
+description = "Finder sidebar favorite items"
+
+[[artifact]]
+name = "recent-ipod-plist"
+path = "~/Library/Preferences/com.apple.iPod.plist"
+description = "iPod/iOS device sync history"

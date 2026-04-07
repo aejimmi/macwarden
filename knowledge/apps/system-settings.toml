@@ -1,0 +1,5 @@
+code_id = "com.apple.systempreferences"
+name = "System Settings"
+developer = "Apple Inc."
+category = "system"
+description = "macOS system configuration and preferences"

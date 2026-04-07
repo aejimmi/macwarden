@@ -1,0 +1,14 @@
+[domain]
+name = "telemetry"
+description = "Crash reports, diagnostic data, and unified system logs"
+safety = "recommended"
+
+[[artifact]]
+name = "diagnostic-reports"
+path = "~/Library/Logs/DiagnosticReports/"
+description = "Crash and hang reports sent to Apple"
+
+[[artifact]]
+name = "unified-log-erase"
+command = "log erase --all"
+description = "Erase the entire unified system log (requires root)"

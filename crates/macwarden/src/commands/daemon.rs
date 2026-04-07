@@ -141,7 +141,7 @@ fn plist_location() -> Result<(PathBuf, String)> {
 
 /// Path for stdout/stderr log output.
 fn log_path() -> Result<PathBuf> {
-    cli::expand_home("~/.local/share/macwarden/monitor.log")
+    cli::expand_home("~/.macwarden/monitor.log")
 }
 
 /// Generate a launchd plist for `macwarden monitor`.

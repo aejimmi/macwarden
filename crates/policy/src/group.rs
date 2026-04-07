@@ -191,10 +191,9 @@ pub fn parse_groups_toml(content: &str) -> crate::error::Result<Vec<ServiceGroup
 /// patterns = ["com.apple.Spotlight", "com.apple.metadata.mds*"]
 /// ```
 pub fn parse_group_file(content: &str) -> crate::error::Result<ServiceGroup> {
-    let parsed: SingleGroupFile =
-        toml::from_str(content).map_err(|e| CoreError::ProfileParse {
-            message: format!("failed to parse group file: {e}"),
-        })?;
+    let parsed: SingleGroupFile = toml::from_str(content).map_err(|e| CoreError::ProfileParse {
+        message: format!("failed to parse group file: {e}"),
+    })?;
 
     let g = parsed.group;
     Ok(ServiceGroup {

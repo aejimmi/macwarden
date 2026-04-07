@@ -2,17 +2,21 @@
 
 Your Mac runs 500+ silent processes — telemetry, profiling, Siri, Spotlight, iCloud sync. There's no off switch. **macwarden is the off switch.**
 
+<p align="center">
+  <img src="assets/status-services.png" alt="macwarden status — services and privacy score" width="700">
+</p>
+
 ## Your Mac is not yours
 
 A fresh Mac with no apps installed runs over 500 background processes. Most have no controls in System Settings. Here's what they do:
 
-**Spotlight** sends your search queries to Apple, Microsoft Bing, and unnamed third parties — along with your location, the apps you use, and what you click. Enabled by default since 2014.
+**Spotlight** sends your search queries to Apple, Microsoft Bing, and unnamed third parties — along with your location, the apps you use, and what you click. It extracts thousands of named entities from your browsing and builds topic profiles using three separate algorithms. Enabled by default since 2014.
 
 **Siri** records and sends audio to Apple servers, including accidental activations. A whistleblower revealed contractors listened to intimate conversations, medical details, and business calls. Apple admitted it. Paid $95M to settle in January 2025.
 
-**On-device profiling** — coreduetd, suggestd, biomesyncd, routined — learns your daily patterns, app usage, movement, and habits. Feeds Apple Intelligence and Siri suggestions. Runs continuously.
+**On-device profiling** — `EntityTagging_Family` reads your contacts, photos, call patterns, and location history to classify every person in your life — mother, father, sister, brother, partner, coworker, child — using 144 input features, updated every 2 hours. `EntityRelevanceModel` cross-references your geohash, WiFi network, and time of day to decide who matters to you right now. Your photos are ranked into tiers called `GoldAssets`, `ShinyGems`, and `RegularGems` by a model that learned what you find beautiful. A nudity scanner runs on every image. 21 ML models run continuously behind coreduetd, suggestd, biomesyncd, and routined. None have an off switch in System Settings.
 
-**Telemetry** — analyticsd, reportingd, and 18 other services report diagnostics, usage patterns, and crash data. Always on.
+**Telemetry** — analyticsd, reportingd, and 18 other services report diagnostics, usage patterns, and crash data. Even when every analytics toggle in System Settings is off — Apple still collects, tagging records under internal `OptOut` configs.
 
 **iCloud** — in February 2025, the UK government ordered Apple to backdoor iCloud under the Investigatory Powers Act. Apple complied by removing end-to-end encryption for UK users.
 
@@ -42,9 +46,10 @@ Every action is snapshotted. Undo everything:
 sudo macwarden undo
 ```
 
-## See what's running
+## See what's happening
 
 ```bash
+macwarden status              # privacy score + full posture dashboard
 macwarden                     # list all service groups
 macwarden network             # active network connections by service
 macwarden devices             # camera and microphone access
@@ -73,10 +78,19 @@ Exclude specific services from a group block:
 sudo macwarden block continuity --except com.apple.Handoff
 ```
 
-Delete cached data left behind by disabled services:
+<p align="center">
+  <img src="assets/status-footprint.png" alt="macwarden status — privacy footprint, device access, network" width="700">
+</p>
+
+Delete privacy footprint — browser history, download logs, window snapshots, caches:
 
 ```bash
-sudo macwarden scrub telemetry
+macwarden scrub all                   # wipe all forensic traces
+macwarden scrub safari                # just Safari artifacts
+macwarden scrub saved-state           # window snapshots
+macwarden scrub quarantine-events-db  # single artifact by name
+macwarden scrub --list                # see all 42 artifacts across 12 domains
+macwarden scrub --dry-run safari      # preview with sizes before deleting
 ```
 
 ## Stay locked down
@@ -91,15 +105,19 @@ sudo macwarden watch --install    # run as persistent daemon
 ## Commands
 
 ```
+macwarden status                  privacy score + full posture dashboard
 macwarden                         list service groups (default)
 macwarden info <target>           inspect a group, service, or profile
 macwarden network                 active network connections by service
 macwarden devices                 camera and microphone access
+macwarden scrub <target>          delete privacy footprint artifacts
+macwarden scrub --list            show all scrub targets
+macwarden net shield on           block 624 known tracker domains
+macwarden net scan                connections with firewall evaluation
 
 sudo macwarden use <profile>      apply a profile (e.g. privacy)
 sudo macwarden block <target>     disable a service or group
 sudo macwarden allow <target>     re-enable a service or group
-sudo macwarden scrub <group>      delete cached data for a group
 sudo macwarden watch              continuous enforcement
 sudo macwarden undo               revert last action
 ```
@@ -110,7 +128,7 @@ macwarden uses `launchctl disable` to persistently prevent services from loading
 
 Blocked services stay off across reboots. Every destructive action saves a snapshot so you can `undo`.
 
-The catalog covers 255 macOS services organized into 34 groups with safety tiers (recommended, optional, keep). 16 critical services (WindowServer, launchd, securityd) are hardcoded as undisableable.
+The catalog covers 255 macOS services organized into 48 groups with safety tiers (recommended, optional, keep). 42 privacy artifacts across 12 domains are tracked for forensic cleanup. 16 critical services (WindowServer, launchd, securityd) are hardcoded as undisableable.
 
 Recovery: boot into Recovery Mode → Terminal → delete `/private/var/db/com.apple.xpc.launchd/disabled.plist`.
 
@@ -118,7 +136,7 @@ See [themacfiles](https://github.com/aejimmi/themacfiles) for the full research 
 
 ## Roadmap
 
-- Network firewall — per-service outbound allow/block rules
-- Real-time microphone and camera monitoring per service
+- Additional profiles — paranoid, developer, minimal
+- Scheduled scrub — automatic daily/weekly footprint cleanup
+- Browser artifact depth — cookie counts, domain counts per site
 - Graphical interface
-- Additional profiles — minimal, developer, airgapped, studio, paranoid

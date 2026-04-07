@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing, clippy::panic)]
+
 use super::*;
 
 use policy::{SafetyLevel, ServiceCategory};
@@ -112,9 +114,7 @@ fn test_load_from_toml_malformed() {
             assert!(!message.is_empty(), "error message should not be empty");
         }
         other => {
-            // Use debug formatting to avoid the test silently passing.
-            let _ = format!("expected AnnotationParse, got {:?}", other);
-            assert!(false, "expected AnnotationParse variant");
+            panic!("expected AnnotationParse, got {other:?}");
         }
     }
 }
@@ -180,11 +180,11 @@ macos_max = "26.0.0"
         .lookup("com.apple.test")
         .expect("should find test service");
     assert_eq!(
-        ann.macos_min.as_ref().map(|v| v.to_string()),
+        ann.macos_min.as_ref().map(ToString::to_string),
         Some("14.0.0".to_string())
     );
     assert_eq!(
-        ann.macos_max.as_ref().map(|v| v.to_string()),
+        ann.macos_max.as_ref().map(ToString::to_string),
         Some("26.0.0".to_string())
     );
 }

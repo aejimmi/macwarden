@@ -169,7 +169,7 @@ pub fn write_snapshot(profile_name: &str, targets: &[&ServiceInfo]) -> Result<()
 
 /// Returns the snapshot storage directory.
 pub fn snapshot_dir() -> Result<PathBuf> {
-    cli::expand_home("~/.local/share/macwarden/snapshots")
+    cli::expand_home("~/.macwarden/snapshots")
 }
 
 /// Generate a Unix-epoch timestamp string (no chrono dependency needed).

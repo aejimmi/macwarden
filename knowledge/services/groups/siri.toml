@@ -1,0 +1,18 @@
+[group]
+name = "siri"
+description = "Siri voice assistant and dictation"
+safety = "recommended"
+respawn_behavior = "respawns-aggressive"
+patterns = [
+    "com.apple.Siri*",
+    "com.apple.siri*",
+    "com.apple.assistant*",
+    "com.apple.parsec*",
+    "com.apple.DictationIM",
+    "com.apple.SiriTTSTraining*",
+]
+cleanup_commands = [
+    "rm -rf ~/Library/Assistant/",
+    "rm -rf ~/Library/Caches/com.apple.SiriNCService/",
+    "rm -rf ~/Library/Caches/com.apple.assistant*",
+]

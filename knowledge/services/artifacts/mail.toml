@@ -1,0 +1,19 @@
+[domain]
+name = "mail"
+description = "Apple Mail downloaded attachments and caches"
+safety = "optional"
+
+[[artifact]]
+name = "mail-downloads"
+path = "~/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/"
+description = "Mail attachment downloads (opened attachments are cached here)"
+
+[[artifact]]
+name = "mail-downloads-legacy"
+path = "~/Library/Mail Downloads/"
+description = "Legacy Mail attachment downloads (pre-sandbox)"
+
+[[artifact]]
+name = "mail-caches"
+path = "~/Library/Caches/com.apple.mail/"
+description = "Apple Mail general caches"

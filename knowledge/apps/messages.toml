@@ -1,0 +1,5 @@
+code_id = "com.apple.MobileSMS"
+name = "Messages"
+developer = "Apple Inc."
+category = "communication"
+description = "Apple's iMessage and SMS client"

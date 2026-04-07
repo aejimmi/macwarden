@@ -19,15 +19,24 @@ catalog = { workspace = true }
 launchd = { workspace = true }
 snapshot = { workspace = true }
 sensors = { workspace = true }
+net = { workspace = true }
+procmon = { workspace = true }
+metrics = { workspace = true }
+dns-lookup = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
+flate2 = { workspace = true }
+tar = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 plist = { workspace = true }
 tabled = { workspace = true }
+toml = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 libc = { workspace = true }
+ureq = { workspace = true }
+sha2 = { workspace = true }
 notify = { workspace = true }
 signal-hook = { workspace = true }
 

@@ -1,0 +1,5 @@
+code_id = "company.thebrowser.Browser"
+name = "Arc"
+developer = "The Browser Company"
+category = "browser"
+description = "Chromium-based browser with workspace organization"

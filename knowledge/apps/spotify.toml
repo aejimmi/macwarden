@@ -1,0 +1,5 @@
+code_id = "com.spotify.client"
+name = "Spotify"
+developer = "Spotify AB"
+category = "media"
+description = "Music and podcast streaming service"

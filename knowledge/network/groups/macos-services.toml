@@ -1,0 +1,41 @@
+[group]
+name = "macos-services"
+description = "Apple system services -- updates, activation, time sync, certificates"
+default_enabled = true
+priority = 5
+
+[[group.rules]]
+name = "Software updates"
+process = "*"
+dest_hosts = ["swscan.apple.com", "swdist.apple.com", "swcdn.apple.com", "updates.cdn-apple.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Certificate validation"
+process = "*"
+dest_hosts = ["ocsp.apple.com", "ocsp2.apple.com", "crl.apple.com", "valid.apple.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Time sync"
+process = "*"
+dest_hosts = ["time.apple.com", "time-ios.apple.com", "time-macos.apple.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Device activation and identity"
+process = "*"
+dest_hosts = ["albert.apple.com", "gs.apple.com", "identity.apple.com", "gateway.icloud.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Captive portal detection"
+process = "*"
+dest_hosts = ["captive.apple.com"]
+action = "allow"
+
+[[group.rules]]
+name = "App Store and notarization"
+process = "*"
+dest_hosts = ["apps.apple.com", "*.mzstatic.com", "api.apple-cloudkit.com"]
+action = "allow"

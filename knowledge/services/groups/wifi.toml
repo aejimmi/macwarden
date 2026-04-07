@@ -1,0 +1,12 @@
+[group]
+name = "wifi"
+description = "WiFi connection history and saved network metadata"
+safety = "keep"
+patterns = [
+    "com.apple.wifi*",
+    "com.apple.airportd",
+]
+cleanup_commands = [
+    "rm -f /Library/Preferences/com.apple.wifi.known-networks.plist",
+    "rm -rf /private/var/db/dhcpclient/leases/",
+]

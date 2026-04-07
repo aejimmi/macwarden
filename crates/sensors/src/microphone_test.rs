@@ -1,45 +1,45 @@
 use super::*;
 
 #[test]
-fn test_is_active_returns_result() {
-    // This calls real hardware — just verify it doesn't panic or crash.
-    // On CI without audio hardware, it may return an error. Both are OK.
-    let result = is_active();
-    match result {
-        Ok(active) => {
-            // Valid boolean — mic is either active or not.
-            assert!(active || !active);
-        }
-        Err(SensorError::NoDevice { kind }) => {
-            assert_eq!(kind, "microphone");
-        }
-        Err(SensorError::CoreAudio { function, code }) => {
-            // API call failed — acceptable on headless systems.
-            assert!(!function.is_empty());
-            assert_ne!(code, 0);
-        }
-        Err(_) => {
-            // Other errors are unexpected but not worth panicking over.
+fn test_enumerate_input_devices_returns_at_least_one() {
+    // On any Mac with a built-in mic, this should find at least one device.
+    let devices = enumerate_input_devices();
+    // On CI or headless systems this may fail — skip gracefully.
+    if let Ok(devs) = devices {
+        assert!(!devs.is_empty());
+        for d in &devs {
+            assert_eq!(d.kind, MediaDeviceKind::Microphone);
+            assert!(!d.name.is_empty(), "device name should not be empty");
+            assert_ne!(d.id, 0, "device id should not be zero");
         }
     }
 }
 
 #[test]
-fn test_mic_monitor_start_and_drop() {
-    let (tx, _rx) = mpsc::channel();
+fn test_is_active_does_not_panic() {
+    // Just verify it doesn't crash — result depends on hardware state.
+    let _ = is_active();
+}
 
-    // Start monitoring — may fail if no audio device exists.
-    match MicMonitor::start(tx) {
+#[test]
+fn test_mic_monitor_start_stop_lifecycle() {
+    let (tx, _rx) = mpsc::channel();
+    // On a Mac with a mic, this should succeed.
+    match MicMonitor::start(&tx) {
         Ok(monitor) => {
-            // Drop should cleanly remove the listener.
+            // Drop should clean up all listeners without panic.
             drop(monitor);
         }
-        Err(SensorError::NoDevice { .. }) => {
-            // No mic on this system — OK.
-        }
         Err(e) => {
-            // Log but don't fail — CI may lack audio hardware.
-            eprintln!("MicMonitor::start failed (expected on headless): {e}");
+            // Acceptable on headless/CI systems.
+            eprintln!("MicMonitor::start failed (expected on CI): {e}");
         }
+    }
+}
+
+#[test]
+fn test_all_audio_device_ids_returns_devices() {
+    if let Ok(ids) = all_audio_device_ids() {
+        assert!(!ids.is_empty(), "should have at least one audio device");
     }
 }

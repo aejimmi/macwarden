@@ -1,0 +1,5 @@
+code_id = "com.apple.dt.Xcode"
+name = "Xcode"
+developer = "Apple Inc."
+category = "development"
+description = "Apple's IDE for macOS, iOS, and platform development"

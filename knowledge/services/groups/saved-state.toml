@@ -1,0 +1,6 @@
+[group]
+name = "saved-state"
+description = "Application window snapshots — contains screenshots and content of every app at last close"
+safety = "recommended"
+patterns = []
+cleanup_commands = []

@@ -1,0 +1,1679 @@
+# ==========================================================================
+# Critical -- never disable. System will not function.
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.WindowServer"
+description = "Display compositor -- drives all screen rendering"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.opendirectoryd"
+description = "Directory services daemon -- user authentication and lookup"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.securityd"
+description = "Security framework daemon -- keychain, code signing, TLS"
+category = "security"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.configd"
+description = "System configuration daemon -- network and preference changes"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.logd"
+description = "Unified logging daemon"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.notifyd"
+description = "Distributed notification daemon"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.fseventsd"
+description = "File system events daemon -- FSEvents API backend"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.diskarbitrationd"
+description = "Disk arbitration daemon -- mounts and unmounts volumes"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.coreservicesd"
+description = "Core services daemon -- LaunchServices, Metadata, UTI"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.launchd.*"
+description = "Launchd helper services"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.kernel.*"
+description = "Kernel extension and helper services"
+category = "core-os"
+safety = "critical"
+
+[[services]]
+pattern = "com.apple.mDNSResponder"
+description = "Multicast DNS and Bonjour -- required for DNS resolution"
+category = "networking"
+safety = "critical"
+
+# ==========================================================================
+# Telemetry -- recommended to disable for privacy
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.analyticsd"
+description = "Diagnostics and usage data collection"
+category = "telemetry"
+safety = "telemetry"
+artifacts = [
+    { path = "/var/db/diagnostics/", kind = "log", description = "Apple Unified Log (AUL) diagnostic data — can grow to several GB" },
+    { path = "/var/db/uuidtext/", kind = "log", description = "AUL UUID-keyed log text storage" },
+]
+
+[[services]]
+pattern = "com.apple.audioanalyticsd"
+description = "Audio diagnostics and usage reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ecosystemanalyticsd"
+description = "Framework and API usage analysis"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.wifianalyticsd"
+description = "WiFi analytics service"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.inputanalyticsd"
+description = "User input diagnostics and usage"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.geoanalyticsd"
+description = "Location analytics"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.SubmitDiagInfo"
+description = "Diagnostic data submission"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.diagnosticd"
+description = "Powers the `log` command and Console.app. Also collects diagnostics for Apple. Without it: no system log access via `log show/stream`"
+category = "telemetry"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.CrashReporterSupportHelper"
+description = "Supports crash log collection. Without it: no crash reports in Console.app for your own apps"
+category = "telemetry"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ReportCrash"
+description = "Mach exception handler — catches process crashes. Without it: no .crash files in ~/Library/Logs/DiagnosticReports for your own apps"
+category = "telemetry"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ReportCrash.Root"
+description = "Root-level Mach exception handler for system daemons. Without it: no crash logs for system services"
+category = "telemetry"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ReportCrash.Self"
+description = "Self-crash reporting for ReportCrash itself. Pure telemetry"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ReportPanic"
+description = "Kernel panic reporting to Apple. Pure telemetry — panics still happen and logs still exist locally"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ReportGPURestart"
+description = "GPU restart reporting to Apple. Pure telemetry"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ReportMemoryException"
+description = "Memory exception reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ReportSystemMemory"
+description = "System memory reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.CrashReporter*"
+description = "Crash report submission"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.symptom*"
+description = "Network quality monitoring (Symptoms framework). Used by WiFi/cellular handoff and URLSession. Also sends data to Apple. Without it: WiFi switching may be slower"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.osanalytics*"
+description = "OS analytics collection"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.tailspind"
+description = "Hang sampling daemon. Used by Activity Monitor's 'Sample Process'. Also sends hang data to Apple. Without it: Activity Monitor sampling still works, just no background collection"
+category = "telemetry"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.spindump"
+description = "Hang/spin report capture. Provides com.apple.libquitd used by Force Quit (Cmd+Opt+Esc). Without it: Force Quit dialog may not show 'not responding' status reliably"
+category = "telemetry"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.spindump_agent"
+description = "User-level spin dump agent. Reports application hangs to Apple. Without it: no hang reports sent, Force Quit still works"
+category = "telemetry"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.rtcreportingd"
+description = "Real-time communication reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.awdd"
+description = "Apple wireless diagnostics"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.parsec-fbf"
+description = "Siri search analytics uploader"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.triald"
+description = "Trial/experiment daemon"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.triald.system"
+description = "System trial daemon"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ap.adprivacyd"
+description = "Advertising privacy services"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.ap.promotedcontentd"
+description = "Promoted content metrics"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.videosubscriptionsd"
+description = "Video subscription analytics"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.UsageTrackingAgent"
+description = "Screen time usage tracking"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.DiagnosticsReporter"
+description = "Diagnostics reporter agent"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.logd_reporter"
+description = "Log reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.bosreporter"
+description = "BOS reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.csrutil.report"
+description = "CSR utility reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.pluginkit.pkreporter"
+description = "Plugin kit reporting"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.diagnostics*"
+description = "Diagnostics framework services"
+category = "telemetry"
+safety = "telemetry"
+
+[[services]]
+pattern = "com.apple.gkreport"
+description = "Gatekeeper reporting"
+category = "telemetry"
+safety = "telemetry"
+
+# ==========================================================================
+# Siri / AI / Input (category=input, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.Siri.agent"
+description = "Siri agent framework"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.Siri*"
+description = "Siri voice assistant service"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.assistantd"
+description = "Siri daemon"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.assistant_service"
+description = "Siri execution service"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.assistant_cdmd"
+description = "Natural language understanding for Siri"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.assistant*"
+description = "Siri assistant framework service"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.siriactionsd"
+description = "Shortcuts coordination daemon"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.siriinferenced"
+description = "Siri inference engine"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.sirittsd"
+description = "Siri text-to-speech service"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.SiriTTSTrainingAgent"
+description = "Siri TTS training"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.SiriTTSTraining*"
+description = "Siri TTS training services"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.siriknowledged"
+description = "Siri knowledge vocabulary"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.parsecd"
+description = "Siri search support daemon"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.corespeechd"
+description = "CoreSpeech framework"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.DictationIM"
+description = "Dictation input method"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.dictation*"
+description = "Dictation and speech recognition"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.generativeexperiencesd"
+description = "Apple Intelligence generative experience"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.intelligenceflowd"
+description = "Apple Intelligence session manager"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.intelligencecontextd"
+description = "Apple Intelligence context retrieval"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.intelligenceplatformd"
+description = "Apple Intelligence knowledge graph"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.knowledge-agent"
+description = "Siri suggestions agent"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.knowledgeconstructiond"
+description = "Knowledge graph construction"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.naturallanguaged"
+description = "System post editing daemon"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.suggestd"
+description = "Content analysis for contact and event detection — scans messages and documents to extract entities for Siri Suggestions"
+category = "profiling"
+safety = "optional"
+artifacts = [
+    { path = "~/Library/Suggestions/", kind = "cache", description = "Extracted contacts, events, and entities from scanned messages" },
+]
+
+[[services]]
+pattern = "com.apple.duetexpertd"
+description = "Prediction layer for CoreDuet — uses behavioral data from coreduetd to rank apps, contacts, and actions for proactive suggestions"
+category = "profiling"
+safety = "optional"
+artifacts = [
+    { path = "~/Library/Application Support/com.apple.DuetExpertCenter/", kind = "database", description = "Trained prediction models for app ranking and proactive suggestions" },
+]
+
+[[services]]
+pattern = "com.apple.voicebankingd"
+description = "Voice banking framework"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.speech.voiceinstallerd"
+description = "Speech voice installer"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.speech.synthesisserver"
+description = "Speech synthesis server"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.speech.recognitionserver"
+description = "Speech recognition server"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.speech.feedbackservicesserver"
+description = "Speech feedback services"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.speech.speechsynthesisd"
+description = "Speech synthesis daemon"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.speech.speechdatainstallerd"
+description = "Speech data installer"
+category = "input"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.inputmethod*"
+description = "Input method framework service"
+category = "input"
+safety = "important"
+
+# ==========================================================================
+# Cloud / iCloud (category=cloud, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.cloudd"
+description = "CloudKit system daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.cloudpaird"
+description = "Cloud pairing daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.cloudphotod"
+description = "iCloud Photos agent"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CloudSettingsSyncAgent"
+description = "Cloud settings sync"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CloudPhotosConfiguration"
+description = "Cloud photos config"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.iCloudNotificationAgent"
+description = "iCloud notifications"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.iCloudUserNotifications"
+description = "iCloud user notifications"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.icloudmailagent"
+description = "iCloud mail agent"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.icloud.fmfd"
+description = "Find My Friends daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.icloud.searchpartyuseragent"
+description = "Search party user agent"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.icloud.searchpartyd"
+description = "Search party daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.icloud.findmydeviced"
+description = "Find My device daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.icloud*"
+description = "iCloud synchronization service"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.iCloudStats"
+description = "iCloud statistics"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.mbicloudsetupd"
+description = "iCloud setup"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.itunescloudd"
+description = "Music subscription cloud service"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.protectedcloudstorage.protectedcloudkeysyncing"
+description = "Protected cloud key sync"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.security.cloudkeychainproxy3"
+description = "iCloud keychain sync proxy"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.bird"
+description = "iCloud document daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.biomesyncd"
+description = "Data synchronization daemon"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.mediastream.mstreamd"
+description = "Photo stream shared albums"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.SafariCloudHistoryPushAgent"
+description = "Safari browsing history iCloud sync"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.safaridavclient"
+description = "Safari bookmarks iCloud sync"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CloudPhotosD"
+description = "iCloud Photos synchronization"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CloudDocs*"
+description = "iCloud document services"
+category = "cloud"
+safety = "optional"
+
+# ==========================================================================
+# Media (category=media, safety=optional/important)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.amp.*"
+description = "Apple Media Products framework service"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.AMPDeviceDiscoveryAgent"
+description = "Apple Music device discovery"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.photoanalysisd"
+description = "Photos.app analysis orchestrator — face clustering into People, scene classification, and semantic index for Memories and smart search. Works on top of mediaanalysisd. Pre-Monterey primary; superseded by mediaanalysisd on Monterey+"
+category = "media"
+safety = "optional"
+macos_max = "13.99.99"
+artifacts = [
+    { path = "~/Library/Containers/com.apple.photoanalysisd/", kind = "container", description = "Sandboxed container — analysis state and intermediate results" },
+    { path = "~/Library/Containers/com.apple.photoanalysisd/Data/Library/Caches/", kind = "cache", description = "Transient analysis cache — safe to delete" },
+    { path = "~/Library/Preferences/com.apple.xpc.activity2.plist", kind = "database", description = "XPC activity scheduler — drives background analysis triggers" },
+]
+
+[[services]]
+pattern = "com.apple.photolibraryd"
+description = "Photos library SQLite manager — import, export, library structure. Photos.app will not open without this"
+category = "media"
+safety = "optional"
+artifacts = [
+    { path = "~/Pictures/Photos Library.photoslibrary/database/Photos.sqlite", kind = "database", description = "Main Photos database — metadata, albums, faces, analysis results" },
+    { path = "~/Pictures/Photos Library.photoslibrary/database/search/", kind = "database", description = "Search index built from photo analysis" },
+]
+
+[[services]]
+pattern = "com.apple.mediaanalysisd"
+description = "On-device computer vision pipeline — face recognition, object/scene detection, Visual Look Up (plant/animal/landmark ID OS-wide), Live Text OCR. Uses Neural Engine + GPU. Notorious for sustained 100% CPU after OS upgrades or large imports. Respawns aggressively via KeepAlive"
+category = "media"
+safety = "optional"
+macos_min = "12.0.0"
+artifacts = [
+    { path = "~/Library/Containers/com.apple.mediaanalysisd/", kind = "container", description = "Sandboxed container — full analysis state" },
+    { path = "~/Library/Containers/com.apple.mediaanalysisd/Data/Library/Caches/com.apple.mediaanalysisd/", kind = "cache", description = "CV model cache and analysis results — can grow to multiple GB" },
+    { path = "~/Library/Preferences/com.apple.xpc.activity2.plist", kind = "database", description = "XPC activity scheduler — drives background analysis triggers" },
+]
+
+[[services]]
+pattern = "com.apple.mediaanalysisd-access"
+description = "Media analysis access broker — mediates requests from apps (Photos, Finder Quick Look, Spotlight) to the mediaanalysisd CV pipeline. Must be disabled alongside mediaanalysisd or it will trigger respawns"
+category = "media"
+safety = "optional"
+macos_min = "12.0.0"
+
+[[services]]
+pattern = "com.apple.avconferenced"
+description = "Video conference daemon"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.Music*"
+description = "Apple Music background service"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.iTunes*"
+description = "iTunes / Apple Media legacy agent"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.mediaremoted"
+description = "Media remote control daemon"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.coreaudiod"
+description = "Core Audio daemon -- drives audio hardware"
+category = "media"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.photoanalysis*"
+description = "Photo analysis sub-services — helpers spawned by photoanalysisd for face detection, scene classification, and memory generation"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.mediaanalysis*"
+description = "Media analysis sub-services — helpers spawned by mediaanalysisd for Visual Look Up, Live Text, and image feature extraction"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.mediastream*"
+description = "Photo Stream and Shared Albums sync — uploads and downloads shared album content via iCloud"
+category = "media"
+safety = "optional"
+
+# ==========================================================================
+# Networking (category=networking)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.AirDrop*"
+description = "AirDrop file transfer agent"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.rapportd"
+description = "Handoff/Continuity daemon — listens on port 62726. Enables phone call relay, Universal Clipboard, Sidecar. Open to LAN"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.rapportd-user"
+description = "Handoff/Continuity user agent — same as rapportd but runs in user session"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.rapport*"
+description = "Rapport daemon -- device proximity and handoff"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.sharingd"
+description = "AirDrop, Handoff, sharing"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.netbiosd"
+description = "NetBIOS network services"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.awacsd"
+description = "Wide Area Connectivity Service"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.airportd"
+description = "Airport WiFi daemon"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.AirPlayUIAgent"
+description = "AirPlay UI agent"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.AirPortBaseStationAgent"
+description = "Airport base station"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ftp-proxy"
+description = "FTP proxy server"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.sidecar-relay"
+description = "Sidecar virtual display"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.sidecar-hid-relay"
+description = "Sidecar HID relay"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.wifi*"
+description = "WiFi management service"
+category = "networking"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.bluetoothd"
+description = "Bluetooth daemon"
+category = "networking"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.Sharing*"
+description = "Sharing framework services"
+category = "networking"
+safety = "optional"
+
+# ==========================================================================
+# Location / Maps (category=networking, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.locationd"
+description = "Location daemon. Fuses GPS, WiFi, cell, BLE into position fixes. Phones home to 12+ Apple servers. Shared iPhone/Mac binary -- most subsystems (cell towers, pedometer, stride calibration) dormant on desktop. Only needed for Find My Mac, auto-timezone, or location-aware apps."
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CoreLocationAgent"
+description = "Location permission prompt UI. Shows 'allow this app to use your location' dialogs. Without it, apps cannot request new location permissions."
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.geod"
+description = "Map tile and geocoding daemon. Downloads map data, converts addresses to coordinates. Connects to cl2-cl5.apple.com and gsp10-ssl.apple.com. Only needed if you use Apple Maps or MapKit apps."
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.geodMachServiceBridge"
+description = "GeoServices XPC bridge. Forwards map requests from apps to geod. Inert without geod running."
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.routined"
+description = "Behavioral pattern learner. Tracks visits, learns home/work/gym routines, feeds Siri suggestions. Writes to Biome (Apple on-device profiling DB). Not needed for location -- purely predictive."
+category = "profiling"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.Maps.pushdaemon"
+description = "Maps push services"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.Maps.mapssyncd"
+description = "Maps sync"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.maps.destinationd"
+description = "Maps destination daemon"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.navd"
+description = "Travel time daemon"
+category = "networking"
+safety = "optional"
+
+# ==========================================================================
+# Communication (category=networking, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.imagent"
+description = "iMessage core"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.imautomatichistorydeletionagent"
+description = "iMessage auto-delete"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.imtransferagent"
+description = "iMessage transfer"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CommCenter-osx"
+description = "CoreTelephony"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.telephonyutilities.callservicesd"
+description = "Call state management"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CallHistoryPluginHelper"
+description = "Call history"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CallHistorySyncHelper"
+description = "Call history sync"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.soagent"
+description = "iChat/Messages agent"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.identityservicesd"
+description = "Identity services"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CommCenter*"
+description = "Communication center services"
+category = "networking"
+safety = "optional"
+
+# ==========================================================================
+# Screen Sharing / Remote (category=networking, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.screensharing"
+description = "Screen sharing daemon"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.screensharing.agent"
+description = "Screen sharing agent"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.screensharing.menuextra"
+description = "Screen sharing menu"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.screensharing.MessagesAgent"
+description = "Screen sharing via Messages"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.screensharing*"
+description = "Screen sharing services"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.SSInvitationAgent"
+description = "Screen sharing invitations"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.RemoteDesktop"
+description = "Remote Desktop agent"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.RemoteDesktop*"
+description = "Remote Desktop services"
+category = "networking"
+safety = "optional"
+
+# ==========================================================================
+# Home (category=networking, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.homed"
+description = "HomeKit daemon"
+category = "networking"
+safety = "optional"
+
+# ==========================================================================
+# Family / Controls (category=accessibility, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.familycircled"
+description = "Family Circle"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.familycontrols"
+description = "Family Controls daemon"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.familycontrols.useragent"
+description = "Family Controls agent"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.familycontrols*"
+description = "Family Controls services"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.familynotificationd"
+description = "Family notifications"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ScreenTimeAgent"
+description = "Screen Time agent"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ScreenTime*"
+description = "Screen Time services"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.parentalcontrols.check"
+description = "Parental controls"
+category = "accessibility"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.parentalcontrols*"
+description = "Parental controls services"
+category = "accessibility"
+safety = "optional"
+
+# ==========================================================================
+# Find My (category=cloud, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.findmymac"
+description = "Find My Mac"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.findmymacmessenger"
+description = "Find My Mac messenger"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.findmy.findmylocateagent"
+description = "Find My locate agent"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.findmy.findmybeaconingd"
+description = "Find My beaconing"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.findmy*"
+description = "Find My services"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.FindMyMac*"
+description = "Find My Mac services"
+category = "cloud"
+safety = "optional"
+
+# ==========================================================================
+# Gaming (category=media, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.GameController.gamecontrollerd"
+description = "Game controller daemon"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.GameController*"
+description = "Game controller services"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.gamed"
+description = "GameCenter"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.gamepolicyd"
+description = "Game policy daemon"
+category = "media"
+safety = "optional"
+
+# ==========================================================================
+# Backup (category=cloud, safety=important)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.backupd"
+description = "Time Machine backup"
+category = "cloud"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.backupd-helper"
+description = "Time Machine helper"
+category = "cloud"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.backupd*"
+description = "Time Machine backup services"
+category = "cloud"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.TMHelperAgent"
+description = "Time Machine helper agent"
+category = "cloud"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.TMHelper*"
+description = "Time Machine helper services"
+category = "cloud"
+safety = "important"
+
+# ==========================================================================
+# Developer (category=developer, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.rpmuxd"
+description = "Remote device debugging"
+category = "developer"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.dt.*"
+description = "Xcode developer tools service"
+category = "developer"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.instruments*"
+description = "Instruments profiling framework service"
+category = "developer"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.simulated*"
+description = "iOS Simulator helper service"
+category = "developer"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CoreSimulator*"
+description = "Core Simulator framework service"
+category = "developer"
+safety = "optional"
+
+# ==========================================================================
+# Security (category=security, safety=important)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.ManagedClient.cloudconfigurationd"
+description = "Device enrollment config"
+category = "security"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.ManagedClientAgent.enrollagent"
+description = "Device enrollment agent"
+category = "security"
+safety = "important"
+
+# ==========================================================================
+# Accessibility (category=accessibility, safety=important)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.accessibility.MotionTrackingAgent"
+description = "Motion tracking"
+category = "accessibility"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.accessibility.axassetsd"
+description = "AX asset loader"
+category = "accessibility"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.accessibility*"
+description = "Accessibility framework service"
+category = "accessibility"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.VoiceOver"
+description = "VoiceOver"
+category = "accessibility"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.VoiceOver*"
+description = "VoiceOver screen reader"
+category = "accessibility"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.universalaccessd"
+description = "Universal access services"
+category = "accessibility"
+safety = "important"
+
+[[services]]
+pattern = "com.apple.universalaccess*"
+description = "Universal access service"
+category = "accessibility"
+safety = "important"
+
+# ==========================================================================
+# Miscellaneous agents (category=unknown, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.newsd"
+description = "News daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.tipsd"
+description = "Tips notifications"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.weatherd"
+description = "Weather daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.watchlistd"
+description = "Apple TV app daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.bookstoreagent"
+description = "Books/iBooks"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.financed"
+description = "Apple Pay/Wallet"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.passd"
+description = "Wallet/Pass services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.chronod"
+description = "Widget center"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.BiomeAgent"
+description = "Biome operation graph"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.biomed"
+description = "Biome daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.calaccessd"
+description = "Calendar daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.dataaccess.dataaccessd"
+description = "Calendar sync"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.followupd"
+description = "CoreFollowUp"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.progressd"
+description = "ClassKit sync"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.remindd"
+description = "Reminders daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.replicatord"
+description = "iPhone/Mac widget sync — listens on random UDP port. Syncs widget data between devices. Unnecessary if you don't use iPhone widgets on Mac"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.controlcenter"
+description = "Control Center — also runs AirPlay Receiver, listening on ports 7000 (video) and 5000 (audio). These ports accept connections from anyone on your LAN. Also contains analytics strings"
+category = "media"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.CoreDevice.remotepairingd"
+description = "Xcode wireless device pairing — listens on UDP port 3722. Used to pair iPhones/iPads wirelessly for development. Unnecessary unless actively developing for iOS"
+category = "developer"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.chronod"
+description = "Widget center and ChronoKit framework — manages widget refresh schedules and timeline updates"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.macos.studentd"
+description = "Classroom student agent"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.ContextStoreAgent"
+description = "Context store"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.coreduetd"
+description = "Behavioral profiling engine — tracks app usage, device interactions, Bluetooth proximity, and location patterns in knowledgeC.db. Runs on-device ML classifiers (iCloudFamilyModel decision trees, gradient-boosted trees, random forests) to fingerprint individual users and predict behavior. Feeds Siri Suggestions, Handoff, Focus modes, Screen Time"
+category = "profiling"
+safety = "optional"
+artifacts = [
+    { path = "~/Library/Application Support/Knowledge/knowledgeC.db", kind = "database", description = "Behavioral history — app usage, device interactions, location patterns, Bluetooth proximity" },
+    { path = "~/Library/Application Support/Knowledge/knowledgeC.db-wal", kind = "database", description = "Write-ahead log for knowledgeC.db" },
+    { path = "~/Library/Application Support/Knowledge/knowledgeC.db-shm", kind = "database", description = "Shared memory file for knowledgeC.db" },
+]
+
+[[services]]
+pattern = "com.apple.modelmanagerd"
+description = "ML model management"
+category = "unknown"
+safety = "optional"
+
+# ==========================================================================
+# Software Updates (category=unknown, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.SoftwareUpdate*"
+description = "Software update services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.softwareupdate*"
+description = "Software update daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.mobile.softwareupdated"
+description = "Mobile software update"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.appstored"
+description = "App Store daemon"
+category = "unknown"
+safety = "optional"
+
+# ==========================================================================
+# Safari (category=unknown, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.Safari*"
+description = "Safari browser services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.SafariBookmarks*"
+description = "Safari bookmarks services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.SafariNotification*"
+description = "Safari notification services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.WebKit*"
+description = "WebKit framework services"
+category = "unknown"
+safety = "optional"
+
+# ==========================================================================
+# Notifications (category=unknown, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.UserNotificationCenter*"
+description = "User notification center"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.usernoted*"
+description = "User notification daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.aps*"
+description = "Apple Push Notification services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.apsd"
+description = "Apple Push Notification daemon"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.AOSPushRelay"
+description = "AOS push relay"
+category = "unknown"
+safety = "optional"
+
+# ==========================================================================
+# Wallet (category=unknown, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.nfcd"
+description = "NFC daemon"
+category = "unknown"
+safety = "optional"
+
+# ==========================================================================
+# Bluetooth (category=networking, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.bluetooth*"
+description = "Bluetooth services"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.BTServer*"
+description = "Bluetooth server services"
+category = "networking"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.BluetoothUIService"
+description = "Bluetooth UI service"
+category = "networking"
+safety = "optional"
+
+# ==========================================================================
+# Mail (category=cloud, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.mail*"
+description = "Apple Mail services"
+category = "cloud"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.Mail*"
+description = "Apple Mail agent"
+category = "cloud"
+safety = "optional"
+
+# ==========================================================================
+# Printing (category=unknown, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.print*"
+description = "Printing services"
+category = "unknown"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.cups*"
+description = "CUPS printing services"
+category = "unknown"
+safety = "optional"
+
+# ==========================================================================
+# Spotlight (category=core-os, safety=optional)
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.Spotlight"
+description = "Spotlight search"
+category = "core-os"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.metadata.mds*"
+description = "Spotlight metadata server"
+category = "core-os"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.corespotlight*"
+description = "Core Spotlight framework"
+category = "core-os"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.metadata.md*"
+description = "Spotlight metadata services"
+category = "core-os"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.spotlightknowledge*"
+description = "Spotlight knowledge services"
+category = "core-os"
+safety = "optional"
+
+[[services]]
+pattern = "com.apple.managedcorespotlight*"
+description = "Managed Core Spotlight"
+category = "core-os"
+safety = "optional"
+
+# ==========================================================================
+# Secure Backup
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.SecureBackupDaemon"
+description = "Secure backup daemon"
+category = "cloud"
+safety = "important"
+
+# ==========================================================================
+# Location access store
+# ==========================================================================
+
+[[services]]
+pattern = "com.apple.locationaccessstored"
+description = "Location access store -- persists per-app location authorization decisions to disk. Disabling forces re-prompting."
+category = "networking"
+safety = "optional"

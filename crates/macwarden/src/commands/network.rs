@@ -23,26 +23,50 @@ use crate::cli::OutputFormat;
 /// A network connection tied to a process.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct NetEntry {
+    /// Process ID.
     pub pid: u32,
+    /// Raw process name from lsof.
     pub process: String,
+    /// Resolved service label from launchctl.
     pub service: Option<String>,
+    /// Service group name from catalog.
     pub group: Option<String>,
+    /// Raw connection string from lsof (e.g. `192.168.1.1:49792->1.2.3.4:443`).
     pub connection: String,
-    pub conn_type: String, // ESTABLISHED, LISTEN, UDP
+    /// Connection type: ESTABLISHED, LISTEN, UDP, etc.
+    pub conn_type: String,
+    /// Parsed remote IP address.
+    pub remote_ip: Option<String>,
+    /// Resolved remote hostname via rDNS.
+    pub remote_host: Option<String>,
+    /// Parsed remote port number.
+    pub remote_port: Option<u16>,
+    /// ISO 3166-1 alpha-2 country code from GeoIP.
+    pub country: Option<String>,
+    /// ASN owner name from GeoIP (e.g. "GOOGLE").
+    pub owner: Option<String>,
+    /// Tracker category if destination matches tracker database.
+    pub tracker: Option<String>,
+    /// Code signing identity of the process.
+    pub code_id: Option<String>,
 }
 
 #[derive(Debug, Tabled)]
 struct NetRow {
     #[tabled(rename = "Group")]
     group: String,
-    #[tabled(rename = "Service")]
-    service: String,
-    #[tabled(rename = "PID")]
-    pid: u32,
+    #[tabled(rename = "Process")]
+    process: String,
+    #[tabled(rename = "Remote")]
+    remote: String,
+    #[tabled(rename = "Country")]
+    country: String,
+    #[tabled(rename = "Owner")]
+    owner: String,
+    #[tabled(rename = "Tracker")]
+    tracker: String,
     #[tabled(rename = "Type")]
     conn_type: String,
-    #[tabled(rename = "Connection")]
-    connection: String,
 }
 
 // ---------------------------------------------------------------------------
@@ -63,16 +87,52 @@ pub fn run(format: OutputFormat, all: bool) -> Result<()> {
         .filter_map(|e| e.pid.map(|p| (p, e.label)))
         .collect();
 
-    // Get network connections
-    let entries = collect_network_connections(&pid_to_label, &groups);
+    // Get network connections and enrich with GeoIP, rDNS, code signing, trackers
+    let mut entries = collect_network_connections(&pid_to_label, &groups);
+    super::network_enrich::enrich_entries(&mut entries);
 
-    // Filter: by default only show outbound (ESTABLISHED + remote UDP), not LISTEN
+    // Dedup by (display_process, remote_ip) to collapse multiple connections
+    // from the same app to the same host.
+    entries.sort_by(|a, b| {
+        let rank = |e: &NetEntry| -> u8 {
+            if e.group.is_some() {
+                0
+            } else if e.service.is_some() {
+                1
+            } else {
+                2
+            }
+        };
+        rank(a)
+            .cmp(&rank(b))
+            .then_with(|| a.group.cmp(&b.group))
+            .then_with(|| {
+                super::network_enrich::display_process(a)
+                    .cmp(&super::network_enrich::display_process(b))
+            })
+            .then_with(|| a.remote_ip.cmp(&b.remote_ip))
+    });
+    entries.dedup_by(|a, b| {
+        super::network_enrich::display_process(a) == super::network_enrich::display_process(b)
+            && a.remote_ip.is_some()
+            && a.remote_ip == b.remote_ip
+    });
+
+    // Filter: by default skip LISTEN, wildcard, and link-local/private addresses
     let filtered: Vec<&NetEntry> = if all {
         entries.iter().collect()
     } else {
         entries
             .iter()
             .filter(|e| e.conn_type != "LISTEN" && !e.connection.contains("*:*"))
+            .filter(|e| {
+                // Skip link-local and private addresses unless --all
+                e.remote_ip.as_deref().is_none_or(|ip_str| {
+                    ip_str
+                        .parse::<std::net::IpAddr>()
+                        .is_ok_and(|ip| !super::network_enrich::is_local_addr(&ip))
+                })
+            })
             .collect()
     };
 
@@ -96,6 +156,14 @@ pub fn run(format: OutputFormat, all: bool) -> Result<()> {
 // ---------------------------------------------------------------------------
 // Collection
 // ---------------------------------------------------------------------------
+
+/// Parse `lsof -i -n -P` and cross-reference with services and groups.
+pub(crate) fn collect_network_connections_pub(
+    pid_to_label: &HashMap<u32, String>,
+    groups: &[ServiceGroup],
+) -> Vec<NetEntry> {
+    collect_network_connections(pid_to_label, groups)
+}
 
 /// Parse `lsof -i -n -P` and cross-reference with services and groups.
 fn collect_network_connections(
@@ -146,28 +214,15 @@ fn collect_network_connections(
             group: group_name,
             connection,
             conn_type,
+            remote_ip: None,
+            remote_host: None,
+            remote_port: None,
+            country: None,
+            owner: None,
+            tracker: None,
+            code_id: None,
         });
     }
-
-    // Sort: grouped services first, then ungrouped services, then other processes
-    entries.sort_by(|a, b| {
-        let rank = |e: &NetEntry| -> u8 {
-            if e.group.is_some() {
-                0
-            } else if e.service.is_some() {
-                1
-            } else {
-                2
-            }
-        };
-        rank(a)
-            .cmp(&rank(b))
-            .then_with(|| a.group.cmp(&b.group))
-            .then_with(|| a.process.cmp(&b.process))
-    });
-
-    // Deduplicate: same PID + same connection = keep one
-    entries.dedup_by(|a, b| a.pid == b.pid && a.connection == b.connection);
 
     entries
 }
@@ -260,15 +315,20 @@ fn print_table(entries: &[&NetEntry]) {
         .map(|e| NetRow {
             group: e.group.clone().unwrap_or_else(|| {
                 if e.service.is_some() {
-                    "·".to_owned()
+                    "\u{b7}".to_owned()
                 } else {
-                    "—".to_owned()
+                    "\u{2014}".to_owned()
                 }
             }),
-            service: e.service.clone().unwrap_or_else(|| e.process.clone()),
-            pid: e.pid,
+            process: truncate(&super::network_enrich::display_process(e), 30),
+            remote: truncate(&super::network_enrich::display_remote(e), 48),
+            country: e.country.clone().unwrap_or_else(|| "-".to_owned()),
+            owner: e
+                .owner
+                .as_deref()
+                .map_or_else(|| "-".to_owned(), |n| truncate(n, 20)),
+            tracker: e.tracker.clone().unwrap_or_default(),
             conn_type: e.conn_type.clone(),
-            connection: truncate(&e.connection, 55),
         })
         .collect();
 
@@ -276,14 +336,19 @@ fn print_table(entries: &[&NetEntry]) {
     println!("{table}");
 
     let grouped = entries.iter().filter(|e| e.group.is_some()).count();
+    let tracker_count = entries.iter().filter(|e| e.tracker.is_some()).count();
     let services = entries.iter().filter(|e| e.service.is_some()).count();
-    println!(
+    print!(
         "\n{} connections ({} in known groups, {} from services, {} other)",
         entries.len(),
         grouped,
         services - grouped,
         entries.len() - services,
     );
+    if tracker_count > 0 {
+        print!(" -- {tracker_count} tracker connections detected");
+    }
+    println!();
 }
 
 fn truncate(s: &str, max: usize) -> String {

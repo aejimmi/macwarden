@@ -1,0 +1,26 @@
+//! `dns` -- Passive DNS cache and wire parser for macwarden.
+//!
+//! Provides hostname enrichment for the network firewall by mapping
+//! IP addresses to hostnames. Two data sources feed the cache:
+//!
+//! 1. ES RESERVED_5 events (which carry hostname + resolved_ip)
+//! 2. BPF/pcap sniffer (future -- captures DNS responses on port 53)
+//!
+//! # Modules
+//!
+//! - [`cache`] -- Thread-safe LRU cache mapping IpAddr to hostname
+//! - [`parser`] -- DNS wire format response parser (RFC 1035)
+
+pub mod cache;
+pub mod parser;
+
+#[cfg(test)]
+#[path = "cache_test.rs"]
+mod cache_test;
+
+#[cfg(test)]
+#[path = "parser_test.rs"]
+mod parser_test;
+
+pub use cache::DnsCache;
+pub use parser::{DnsAnswer, DnsParseError, DnsResponse, parse_dns_response};

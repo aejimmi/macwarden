@@ -34,7 +34,7 @@ fn test_generate_plist_contains_monitor_argument() {
 
 #[test]
 fn test_generate_plist_contains_log_path() {
-    let log = "/Users/test/.local/share/macwarden/monitor.log";
+    let log = "/Users/test/.macwarden/monitor.log";
     let plist = generate_plist("/usr/local/bin/macwarden", log);
     // stdout and stderr should both point to the log.
     let count = plist.matches(log).count();

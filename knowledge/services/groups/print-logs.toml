@@ -1,0 +1,14 @@
+[group]
+name = "print-logs"
+description = "CUPS print history — job metadata, page counts, sometimes document content"
+safety = "optional"
+patterns = [
+    "com.apple.cups*",
+    "org.cups.*",
+]
+cleanup_commands = [
+    "rm -f /private/var/log/cups/access_log",
+    "rm -f /private/var/log/cups/error_log",
+    "rm -f /private/var/log/cups/page_log",
+    "rm -rf /var/spool/cups/",
+]

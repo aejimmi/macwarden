@@ -1,0 +1,8 @@
+[group]
+name = "audit-logs"
+description = "OpenBSM audit trail — process execution, file access, authentication events"
+safety = "recommended"
+patterns = []
+cleanup_commands = [
+    "rm -rf /var/audit/",
+]

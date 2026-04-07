@@ -21,6 +21,22 @@ pub enum SensorError {
         code: i32,
     },
 
+    /// An IOKit API call returned an error status.
+    #[error("IOKit {function} failed (kern_return_t {code})")]
+    IOKit {
+        /// Name of the function that failed.
+        function: &'static str,
+        /// The kern_return_t error code.
+        code: i32,
+    },
+
+    /// Device enumeration failed.
+    #[error("device enumeration failed: {reason}")]
+    DeviceEnumeration {
+        /// What went wrong.
+        reason: &'static str,
+    },
+
     /// No hardware device of the expected type was found.
     #[error("no {kind} device found")]
     NoDevice {

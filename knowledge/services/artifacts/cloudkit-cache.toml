@@ -1,0 +1,9 @@
+[domain]
+name = "cloudkit-cache"
+description = "CloudKit sync engine caches"
+safety = "optional"
+
+[[artifact]]
+name = "cloudkit-caches"
+path = "~/Library/Caches/CloudKit/"
+description = "CloudKit container caches (re-synced from iCloud on demand)"

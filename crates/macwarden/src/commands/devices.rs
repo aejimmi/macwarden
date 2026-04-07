@@ -118,13 +118,13 @@ struct MediaRow {
 // ---------------------------------------------------------------------------
 
 /// TCC service identifier for camera access.
-const TCC_CAMERA: &str = "kTCCServiceCamera";
+pub(crate) const TCC_CAMERA: &str = "kTCCServiceCamera";
 
 /// TCC service identifier for microphone access.
-const TCC_MICROPHONE: &str = "kTCCServiceMicrophone";
+pub(crate) const TCC_MICROPHONE: &str = "kTCCServiceMicrophone";
 
 /// TCC `auth_value` for user-granted access.
-const AUTH_ALLOWED: i32 = 2;
+pub(crate) const AUTH_ALLOWED: i32 = 2;
 
 /// TCC `auth_value` for user-denied access.
 const AUTH_DENIED: i32 = 0;
@@ -216,15 +216,15 @@ pub fn revoke(bundle_id: &str) -> Result<()> {
 
 /// A raw entry parsed from the TCC database.
 #[derive(Debug, Clone)]
-struct TccEntry {
-    service: String,
-    client: String,
-    auth_value: i32,
+pub(crate) struct TccEntry {
+    pub(crate) service: String,
+    pub(crate) client: String,
+    pub(crate) auth_value: i32,
 }
 
 /// Query both user-level and system-level TCC databases, merge, deduplicate,
 /// and cross-reference with running processes.
-fn query_tcc(
+pub(crate) fn query_tcc(
     pid_to_label: &HashMap<u32, String>,
     groups: &[ServiceGroup],
 ) -> Result<Vec<DeviceEntry>> {
@@ -299,7 +299,7 @@ fn query_tcc(
 }
 
 /// Run `sqlite3` to read TCC entries from a database file.
-fn read_tcc_db(path: &str) -> Result<Vec<TccEntry>> {
+pub(crate) fn read_tcc_db(path: &str) -> Result<Vec<TccEntry>> {
     let query = format!(
         "SELECT service, client, auth_value FROM access \
          WHERE service IN ('{TCC_CAMERA}', '{TCC_MICROPHONE}')"
@@ -320,7 +320,7 @@ fn read_tcc_db(path: &str) -> Result<Vec<TccEntry>> {
 }
 
 /// Parse pipe-delimited sqlite3 output into `TccEntry` values.
-fn parse_tcc_output(output: &str) -> Vec<TccEntry> {
+pub(crate) fn parse_tcc_output(output: &str) -> Vec<TccEntry> {
     output
         .lines()
         .filter_map(|line| {
@@ -345,7 +345,7 @@ fn parse_tcc_output(output: &str) -> Vec<TccEntry> {
 }
 
 /// Expand a leading `~` to `$HOME`.
-fn expand_tcc_path(path: &str) -> Result<String> {
+pub(crate) fn expand_tcc_path(path: &str) -> Result<String> {
     if let Some(rest) = path.strip_prefix("~/") {
         let home = std::env::var("HOME").context("HOME not set")?;
         Ok(format!("{home}/{rest}"))
@@ -359,13 +359,13 @@ fn expand_tcc_path(path: &str) -> Result<String> {
 // ---------------------------------------------------------------------------
 
 /// Minimal info from `ps` for cross-referencing with TCC clients.
-struct RunningProc {
-    pid: u32,
-    command: String,
+pub(crate) struct RunningProc {
+    pub(crate) pid: u32,
+    pub(crate) command: String,
 }
 
 /// Collect running processes via `ps -axo pid=,comm=`.
-fn collect_running_processes() -> Result<Vec<RunningProc>> {
+pub(crate) fn collect_running_processes() -> Result<Vec<RunningProc>> {
     let output = Command::new("ps")
         .args(["-axo", "pid=,comm="])
         .output()
@@ -511,7 +511,6 @@ fn print_results(entries: &[DeviceEntry], format: OutputFormat) {
             if running > 0 || grouped > 0 {
                 println!("{running} authorized apps running, {grouped} in known groups.",);
             }
-
         }
         OutputFormat::Json => {
             let json =

@@ -1,0 +1,24 @@
+[domain]
+name = "system-logs"
+description = "System log files that accumulate over time"
+safety = "keep"
+
+[[artifact]]
+name = "asl-logs"
+path = "/private/var/log/asl/"
+description = "Apple System Logger archive files"
+
+[[artifact]]
+name = "dhcp-leases"
+path = "/private/var/db/dhcpclient/leases/"
+description = "DHCP client lease records (contain MAC and IP history)"
+
+[[artifact]]
+name = "wifi-log"
+path = "/var/log/wifi.log"
+description = "WiFi connection and roaming log"
+
+[[artifact]]
+name = "power-management-logs"
+path = "/private/var/log/powermanagement/"
+description = "Power management and sleep/wake event logs"

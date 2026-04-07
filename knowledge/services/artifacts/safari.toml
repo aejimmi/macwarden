@@ -1,0 +1,49 @@
+[domain]
+name = "safari"
+description = "Safari browser local storage, caches, and cookies"
+safety = "optional"
+
+[[artifact]]
+name = "safari-history-db"
+path = "~/Library/Safari/History.db"
+description = "Browsing history database"
+
+[[artifact]]
+name = "safari-history-db-shm"
+path = "~/Library/Safari/History.db-shm"
+description = "Browsing history database shared memory"
+
+[[artifact]]
+name = "safari-history-db-wal"
+path = "~/Library/Safari/History.db-wal"
+description = "Browsing history database write-ahead log"
+
+[[artifact]]
+name = "safari-downloads-plist"
+path = "~/Library/Safari/Downloads.plist"
+description = "Safari download history"
+
+[[artifact]]
+name = "safari-last-session"
+path = "~/Library/Safari/LastSession.plist"
+description = "Tabs and windows from last Safari session"
+
+[[artifact]]
+name = "safari-localstorage"
+path = "~/Library/Safari/LocalStorage/"
+description = "Safari HTML5 localStorage databases"
+
+[[artifact]]
+name = "safari-favicon-cache"
+path = "~/Library/Safari/Favicon Cache/"
+description = "Cached favicons from visited sites"
+
+[[artifact]]
+name = "safari-databases"
+path = "~/Library/Safari/Databases/"
+description = "Safari IndexedDB and WebSQL databases"
+
+[[artifact]]
+name = "safari-cookies"
+path = "~/Library/Cookies/"
+description = "HTTP cookies shared across Safari and WebKit"

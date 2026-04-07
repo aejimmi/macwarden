@@ -136,12 +136,17 @@ enum Commands {
     ///
     /// Removes Spotlight indexes, behavioral databases, ML caches,
     /// diagnostic logs, and other traces a group's services wrote to disk.
+    /// Run with --list to see all available targets.
     Scrub {
-        /// Group name to scrub data for.
-        target: String,
+        /// Group name, artifact domain, or individual artifact to scrub.
+        /// Use 'all' to clean everything.
+        target: Option<String>,
         /// Print actions without executing.
         #[arg(short = 'n', long)]
         dry_run: bool,
+        /// List all available scrub targets.
+        #[arg(short, long)]
+        list: bool,
     },
 
     /// Revert the last enforcement action.
@@ -175,6 +180,151 @@ enum Commands {
         /// Revoke camera and microphone access for an app (bundle ID).
         #[arg(long)]
         revoke: Option<String>,
+    },
+
+    /// Show privacy posture and score.
+    Status {
+        /// Output format.
+        #[arg(short, long, default_value = "table")]
+        format: OutputFormat,
+    },
+
+    /// Look up a binary on openbinary for behavioral analysis.
+    ///
+    /// Hashes the file, checks the openbinary database, and auto-uploads
+    /// for analysis if not found. Use --no-upload to skip uploading.
+    Lookup {
+        /// Path to the binary to look up.
+        path: String,
+        /// Do not upload if the binary is unknown — just report.
+        #[arg(long)]
+        no_upload: bool,
+        /// Output format.
+        #[arg(short, long, default_value = "table")]
+        format: OutputFormat,
+    },
+
+    /// Network firewall — rules, groups, trackers, apps, explain.
+    Net {
+        #[command(subcommand)]
+        command: NetCommand,
+    },
+}
+
+/// Subcommands for the `net` firewall system.
+#[derive(Debug, Subcommand)]
+pub enum NetCommand {
+    /// Show active network connections with firewall rule evaluation.
+    Scan {
+        /// Filter by process name or code_id.
+        #[arg(long)]
+        process: Option<String>,
+        /// Show only denied / would-be-denied connections.
+        #[arg(long)]
+        denied: bool,
+        /// Show only tracker connections.
+        #[arg(long)]
+        trackers: bool,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Enable or disable the tracker shield (one-command protection).
+    Shield {
+        /// Disable the tracker shield.
+        #[arg(long)]
+        off: bool,
+        /// Block specific categories only (advertising, analytics, fingerprinting, social).
+        #[arg(long)]
+        only: Vec<String>,
+    },
+    /// List network rules (user + groups + trackers).
+    Rules {
+        /// Filter by process code_id pattern.
+        #[arg(long)]
+        process: Option<String>,
+        /// Filter by group name.
+        #[arg(long)]
+        group: Option<String>,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// List network rule groups with enable/disable status.
+    Groups {
+        /// Enable a group.
+        #[arg(long)]
+        enable: Option<String>,
+        /// Disable a group.
+        #[arg(long)]
+        disable: Option<String>,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Tracker shield — categories and stats.
+    Trackers {
+        /// Show blocking stats.
+        #[arg(long)]
+        stats: bool,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Show app categories.
+    Apps {
+        /// Filter by category.
+        #[arg(long)]
+        category: Option<String>,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Explain why a connection would be allowed or denied.
+    Explain {
+        /// Process code_id or path.
+        process: String,
+        /// Destination hostname (optional).
+        host: Option<String>,
+    },
+    /// Show live network decision log (requires ES daemon).
+    Log,
+    /// Watch connections and suggest firewall rules.
+    Learn {
+        /// Duration to learn (e.g. "30s", "5m", "1h"). Default: until Ctrl+C.
+        #[arg(long, short)]
+        duration: Option<String>,
+        /// Generate rule files from observed traffic.
+        #[arg(long)]
+        apply: bool,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Manage external blocklist subscriptions.
+    Blocklists {
+        /// Add a local blocklist file (hosts format).
+        #[arg(long)]
+        add: Option<String>,
+        /// List configured blocklists.
+        #[arg(long)]
+        list: bool,
+    },
+    /// Download or update GeoIP databases for IP enrichment.
+    ///
+    /// Downloads MaxMind GeoLite2-Country and GeoLite2-ASN databases
+    /// to ~/.macwarden/geo/. Requires a free MaxMind license key.
+    /// Get one at: https://www.maxmind.com/en/geolite2/signup
+    Enrich {
+        /// MaxMind license key (or set MAXMIND_LICENSE_KEY env var).
+        #[arg(long)]
+        key: Option<String>,
+        /// Remove downloaded GeoIP databases.
+        #[arg(long)]
+        remove: bool,
+        /// Show current GeoIP database status.
+        #[arg(long)]
+        status: bool,
     },
 }
 
@@ -245,7 +395,7 @@ pub fn plist_dirs() -> Result<Vec<PathBuf>> {
 
 /// Return the path to the active-profile marker file.
 pub fn active_profile_path() -> Result<PathBuf> {
-    expand_home("~/.config/macwarden/active-profile")
+    expand_home("~/.macwarden/active-profile")
 }
 
 /// Read the active profile name, defaulting to `"base"`.
@@ -310,7 +460,11 @@ pub fn run() -> Result<()> {
 
         Some(Commands::Allow { target, dry_run }) => commands::enable::run(&target, dry_run),
 
-        Some(Commands::Scrub { target, dry_run }) => commands::scrub::run(&target, dry_run),
+        Some(Commands::Scrub {
+            target,
+            dry_run,
+            list,
+        }) => commands::scrub::run(target.as_deref(), dry_run, list),
 
         Some(Commands::Watch {
             profile,
@@ -330,10 +484,20 @@ pub fn run() -> Result<()> {
 
         Some(Commands::Network { format, all }) => commands::network::run(format, all),
 
+        Some(Commands::Status { format }) => commands::status::run(format),
+
         Some(Commands::Devices { format, revoke }) => match revoke {
             Some(bundle_id) => commands::devices::revoke(&bundle_id),
             None => commands::devices::run(format),
         },
+
+        Some(Commands::Lookup {
+            path,
+            no_upload,
+            format,
+        }) => commands::lookup::run(&path, no_upload, format),
+
+        Some(Commands::Net { command }) => commands::net::run(command),
     }
 }
 

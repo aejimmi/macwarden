@@ -1,0 +1,306 @@
+[tracker_category]
+name = "Advertising"
+description = "Ad networks, retargeting, ad delivery"
+default_enabled = true
+
+[[tracker_category.domains]]
+pattern = "doubleclick.net"
+description = "Google DoubleClick"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "googlesyndication.com"
+description = "Google Ad Syndication"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "googleadservices.com"
+description = "Google Ad Services"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ads.yahoo.com"
+description = "Yahoo Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ad.doubleclick.net"
+description = "DoubleClick Ad Serving"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adservice.google.com"
+description = "Google Ad Service"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pagead2.googlesyndication.com"
+description = "Google Page Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adsserver.yadro.ru"
+description = "Yadro Ad Server"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "advertising.com"
+description = "AOL Advertising"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adnxs.com"
+description = "AppNexus/Xandr"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "moatads.com"
+description = "Moat Ad Analytics"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adsrvr.org"
+description = "The Trade Desk"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "criteo.com"
+description = "Criteo Retargeting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "rubiconproject.com"
+description = "Rubicon Project"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "pubmatic.com"
+description = "PubMatic"
+breakage_risk = "none"
+
+# --- New domains below ---
+
+[[tracker_category.domains]]
+pattern = "openx.net"
+description = "OpenX Ad Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "casalemedia.com"
+description = "Casale Media (Index Exchange)"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "indexexchange.com"
+description = "Index Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "bidswitch.net"
+description = "BidSwitch Programmatic Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "smartadserver.com"
+description = "Smart AdServer"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "contextweb.com"
+description = "PulsePoint Ad Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "lijit.com"
+description = "Sovrn/Lijit Ad Network"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "media.net"
+description = "Media.net Contextual Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "revcontent.com"
+description = "RevContent Native Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "outbrain.com"
+description = "Outbrain Content Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "taboola.com"
+description = "Taboola Content Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "amazon-adsystem.com"
+description = "Amazon Ad System"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "serving-sys.com"
+description = "Sizmek Ad Serving"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "33across.com"
+description = "33Across Ad Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sharethrough.com"
+description = "Sharethrough Native Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "yieldmo.com"
+description = "Yieldmo Ad Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sonobi.com"
+description = "Sonobi Ad Platform"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "triplelift.com"
+description = "TripleLift Native Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "spotxchange.com"
+description = "SpotX Video Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "spotx.tv"
+description = "SpotX Video Ad Serving"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "undertone.com"
+description = "Undertone Ad Network"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "justpremium.com"
+description = "JustPremium Rich Media Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adroll.com"
+description = "AdRoll Retargeting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "mathtag.com"
+description = "MediaMath Ad Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "mookie1.com"
+description = "Media Innovation Group"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "demdex.net"
+description = "Adobe Audience Manager"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "everesttech.net"
+description = "Adobe Advertising Cloud"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "rfihub.com"
+description = "Rocket Fuel Ad Platform"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "rlcdn.com"
+description = "LiveRamp Ad Data"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "bluekai.com"
+description = "Oracle BlueKai Data Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "exelator.com"
+description = "Nielsen eXelate"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "turn.com"
+description = "Amobee/Turn Ad Platform"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "admob.com"
+description = "Google AdMob Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "inmobi.com"
+description = "InMobi Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "mopub.com"
+description = "MoPub Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "unity3d.com"
+description = "Unity Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "unityads.unity3d.com"
+description = "Unity Ads Serving"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "vungle.com"
+description = "Vungle In-App Video Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "chartboost.com"
+description = "Chartboost Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ironsrc.com"
+description = "ironSource Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "applovin.com"
+description = "AppLovin Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "fyber.com"
+description = "Fyber Mobile Ad Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "smaato.net"
+description = "Smaato Mobile Ad Exchange"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "startapp.com"
+description = "StartApp Mobile Ads"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "tapjoy.com"
+description = "Tapjoy Rewarded Ads"
+breakage_risk = "none"

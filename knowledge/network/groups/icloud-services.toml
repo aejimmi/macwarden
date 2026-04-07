@@ -1,0 +1,22 @@
+[group]
+name = "icloud-services"
+description = "Apple iCloud infrastructure -- sync, backup, CloudKit, iCloud Drive"
+default_enabled = true
+priority = 10
+
+[[group.rules]]
+name = "iCloud core domains"
+process = "*"
+dest_hosts = [
+    "icloud.com", "*.icloud.com", "*.icloud-content.com",
+    "*.apple-cloudkit.com", "*.cdn-apple.com",
+    "*.fe.apple-dns.net",
+]
+action = "allow"
+
+[[group.rules]]
+name = "iCloud Private Relay"
+process = "*"
+dest_hosts = ["mask.icloud.com", "mask-h2.icloud.com"]
+action = "allow"
+note = "Required for iCloud Private Relay"

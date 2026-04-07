@@ -46,6 +46,20 @@ pub enum CoreError {
         /// The maximum allowed depth.
         max_depth: usize,
     },
+
+    /// Failed to parse an artifact TOML file.
+    #[error("failed to parse artifact: {message}")]
+    ArtifactParse {
+        /// Human-readable parse error detail.
+        message: String,
+    },
+
+    /// Artifact catalog failed validation (e.g. duplicate names).
+    #[error("artifact validation failed: {message}")]
+    ArtifactValidation {
+        /// Human-readable validation error detail.
+        message: String,
+    },
 }
 
 /// Convenience alias for results using [`CoreError`].

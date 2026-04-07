@@ -1,0 +1,234 @@
+[tracker_category]
+name = "Fingerprinting"
+description = "Device and browser fingerprinting for cross-site identification"
+default_enabled = true
+
+[[tracker_category.domains]]
+pattern = "fingerprintjs.com"
+description = "FingerprintJS Browser Fingerprinting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "iovation.com"
+description = "TransUnion iovation Device Recognition"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "threatmetrix.com"
+description = "LexisNexis ThreatMetrix Device ID"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "deviceidentity.com"
+description = "Device Identity Fingerprinting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "permutive.com"
+description = "Permutive Audience Platform"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "id5-sync.com"
+description = "ID5 Universal ID"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "tapad.com"
+description = "Tapad Cross-Device Identification"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "intentiq.com"
+description = "IntentIQ Identity Resolution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "liveintent.com"
+description = "LiveIntent Identity Graph"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "zeotap.com"
+description = "Zeotap Customer Intelligence"
+breakage_risk = "none"
+
+# --- New domains below ---
+
+[[tracker_category.domains]]
+pattern = "fpjs.io"
+description = "FingerprintJS Cloud Endpoint"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "fingerprint.com"
+description = "Fingerprint Pro"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "datadome.co"
+description = "DataDome Bot and Fraud Detection"
+breakage_risk = "degraded"
+note = "Some sites use DataDome for bot protection; blocking may trigger CAPTCHAs"
+
+[[tracker_category.domains]]
+pattern = "perimeterx.net"
+description = "PerimeterX Bot Detection"
+breakage_risk = "degraded"
+note = "Bot detection that may gate access to some sites"
+
+[[tracker_category.domains]]
+pattern = "px-cdn.net"
+description = "PerimeterX CDN"
+breakage_risk = "degraded"
+note = "Serves PerimeterX bot detection scripts"
+
+[[tracker_category.domains]]
+pattern = "px-cloud.net"
+description = "PerimeterX Cloud"
+breakage_risk = "degraded"
+note = "PerimeterX cloud fingerprinting endpoint"
+
+[[tracker_category.domains]]
+pattern = "arkoselabs.com"
+description = "Arkose Labs Bot Detection"
+breakage_risk = "degraded"
+note = "Anti-fraud fingerprinting; may break CAPTCHA flows"
+
+[[tracker_category.domains]]
+pattern = "funcaptcha.com"
+description = "Arkose Labs FunCaptcha"
+breakage_risk = "degraded"
+note = "CAPTCHA service with device fingerprinting"
+
+[[tracker_category.domains]]
+pattern = "distil.it"
+description = "Distil Networks Bot Detection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "audiencemanager.de"
+description = "Audience Manager Fingerprinting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "deviceatlas.com"
+description = "DeviceAtlas Device Detection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "maxmind.com"
+description = "MaxMind GeoIP and Device Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "drawbridge.com"
+description = "Drawbridge Cross-Device Identity"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "crosswise.com"
+description = "Oracle Crosswise Device Graph"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "liveramp.com"
+description = "LiveRamp Identity Resolution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adsymptotic.com"
+description = "AdSymptotic Identity Matching"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "digitru.st"
+description = "DigiTrust Unified ID"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "theadex.com"
+description = "TheAdex Cross-Device Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "narrativ.com"
+description = "Narrativ Commerce Identity"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sift.com"
+description = "Sift Digital Trust Fingerprinting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "forter.com"
+description = "Forter Fraud Detection Fingerprinting"
+breakage_risk = "degraded"
+note = "E-commerce fraud detection; blocking may affect checkout flows"
+
+[[tracker_category.domains]]
+pattern = "riskified.com"
+description = "Riskified Fraud Detection"
+breakage_risk = "degraded"
+note = "E-commerce fraud detection via device fingerprinting"
+
+[[tracker_category.domains]]
+pattern = "signifyd.com"
+description = "Signifyd Fraud Protection"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "kount.com"
+description = "Kount Identity Trust"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "sociaplus.com"
+description = "SociaPlus Device Fingerprinting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "adtelligent.com"
+description = "Adtelligent Device Tracking"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "simpli.fi"
+description = "Simpli.fi Device Targeting"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "lotame.com"
+description = "Lotame Data Management Platform"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "crwdcntrl.net"
+description = "Lotame Crowd Control"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "eyeota.net"
+description = "Eyeota Audience Data"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "mxptint.net"
+description = "Maxpoint Interactive Device ID"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "ipredictive.com"
+description = "iPredictive Device Graph"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "throtle.io"
+description = "Throtle Identity Resolution"
+breakage_risk = "none"
+
+[[tracker_category.domains]]
+pattern = "fullcontact.com"
+description = "FullContact Identity Resolution"
+breakage_risk = "none"

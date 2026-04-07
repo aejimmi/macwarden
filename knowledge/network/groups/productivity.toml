@@ -1,0 +1,63 @@
+[group]
+name = "productivity"
+description = "Productivity apps, project management, and collaboration tools"
+default_enabled = false
+priority = 25
+
+[[group.rules]]
+name = "Notion"
+process = "*"
+dest_hosts = [
+    "notion.so", "*.notion.so",
+    "notion-static.com", "*.notion-static.com",
+    "notion.com", "*.notion.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Figma"
+process = "*"
+dest_hosts = [
+    "figma.com", "*.figma.com",
+    "figmacdn.com", "*.figmacdn.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Slack"
+process = "*"
+dest_hosts = [
+    "slack.com", "*.slack.com",
+    "slack-edge.com", "*.slack-edge.com",
+    "slack-imgs.com", "*.slack-imgs.com",
+    "slack-redir.net", "*.slack-redir.net",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Zoom"
+process = "*"
+dest_hosts = [
+    "zoom.us", "*.zoom.us",
+    "zoomgov.com", "*.zoomgov.com",
+]
+action = "allow"
+
+[[group.rules]]
+name = "Linear"
+process = "*"
+dest_hosts = ["linear.app", "*.linear.app"]
+action = "allow"
+
+[[group.rules]]
+name = "Todoist"
+process = "*"
+dest_hosts = ["todoist.com", "*.todoist.com"]
+action = "allow"
+
+[[group.rules]]
+name = "Obsidian Sync"
+process = "*"
+dest_hosts = ["obsidian.md", "*.obsidian.md"]
+action = "allow"
+note = "Required for Obsidian Sync feature"

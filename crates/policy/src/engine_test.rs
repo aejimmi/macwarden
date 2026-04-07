@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing, clippy::panic)]
+
 use super::*;
 use crate::profile::parse_profile_toml;
 use crate::types::{Domain, SafetyLevel, ServiceCategory, ServiceInfo, ServiceState};

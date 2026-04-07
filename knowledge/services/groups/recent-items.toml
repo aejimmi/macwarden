@@ -1,0 +1,5 @@
+[group]
+name = "recent-items"
+description = "Recent files, apps, and server connections tracked by Finder and system"
+safety = "recommended"
+patterns = []
