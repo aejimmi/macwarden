@@ -115,7 +115,7 @@ pub const K_CF_STRING_ENCODING_UTF8: u32 = 0x0800_0100;
 // CoreAudio extern functions
 // ---------------------------------------------------------------------------
 
-#[link(name = "CoreAudio", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "CoreAudio", kind = "framework"))]
 unsafe extern "C" {
     /// Read a property's data into a caller-provided buffer.
     pub fn AudioObjectGetPropertyData(
@@ -160,7 +160,7 @@ unsafe extern "C" {
 // CoreFoundation extern functions
 // ---------------------------------------------------------------------------
 
-#[link(name = "CoreFoundation", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "CoreFoundation", kind = "framework"))]
 unsafe extern "C" {
     /// Create a CFString from a C string.
     pub fn CFStringCreateWithCString(

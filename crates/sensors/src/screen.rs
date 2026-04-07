@@ -25,7 +25,7 @@ const POLL_INTERVAL: Duration = Duration::from_secs(5);
 /// CoreGraphics display ID type.
 type CGDirectDisplayID = u32;
 
-#[link(name = "CoreGraphics", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "CoreGraphics", kind = "framework"))]
 unsafe extern "C" {
     fn CGMainDisplayID() -> CGDirectDisplayID;
     fn CGDisplayMirrorsDisplay(display: CGDirectDisplayID) -> CGDirectDisplayID;

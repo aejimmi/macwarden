@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.1
+
+Fix:
+- build: sensors and process-monitor crates compile on Linux CI without framework link errors
+- build: cargo deny no longer rejects the project's own GPL-3.0 license
+
 ## v0.1.0
 
 New:

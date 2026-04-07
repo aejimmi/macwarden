@@ -30,7 +30,7 @@ type IOServiceInterestCallback = unsafe extern "C" fn(
     message_argument: *mut c_void,
 );
 
-#[link(name = "IOKit", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "IOKit", kind = "framework"))]
 unsafe extern "C" {
     fn IORegisterForSystemPower(
         refcon: *mut c_void,

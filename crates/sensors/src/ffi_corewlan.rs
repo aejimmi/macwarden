@@ -65,7 +65,7 @@ unsafe extern "C" {
 // Linking CoreWLAN ensures the CWWiFiClient class is available at runtime.
 // We don't declare extern functions from CoreWLAN directly -- all interaction
 // goes through the ObjC runtime (`objc_msgSend`).
-#[link(name = "CoreWLAN", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "CoreWLAN", kind = "framework"))]
 unsafe extern "C" {}
 
 // ---------------------------------------------------------------------------

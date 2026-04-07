@@ -69,7 +69,7 @@ pub const K_IO_GENERAL_INTEREST: &[u8] = b"IOGeneralInterest\0";
 // IOKit extern functions
 // ---------------------------------------------------------------------------
 
-#[link(name = "IOKit", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "IOKit", kind = "framework"))]
 unsafe extern "C" {
     /// Create a matching dictionary for an IOKit service class name.
     pub fn IOServiceMatching(name: *const c_char) -> CFMutableDictionaryRef;
@@ -119,7 +119,7 @@ unsafe extern "C" {
 // CoreFoundation RunLoop extern functions
 // ---------------------------------------------------------------------------
 
-#[link(name = "CoreFoundation", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "CoreFoundation", kind = "framework"))]
 unsafe extern "C" {
     /// Get the CFRunLoop for the current thread.
     pub fn CFRunLoopGetCurrent() -> CFRunLoopRef;

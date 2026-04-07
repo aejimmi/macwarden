@@ -503,7 +503,7 @@ pub const K_SEC_CS_SIGNING_INFORMATION: u32 = 2;
 // Security.framework extern functions
 // ---------------------------------------------------------------------------
 
-#[link(name = "Security", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "Security", kind = "framework"))]
 unsafe extern "C" {
     /// Get a `SecCode` guest by attributes (e.g. audit token → code ref).
     pub fn SecCodeCopyGuestWithAttributes(
@@ -549,7 +549,7 @@ unsafe extern "C" {
 // Security.framework external symbols
 // ---------------------------------------------------------------------------
 
-#[link(name = "Security", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "Security", kind = "framework"))]
 unsafe extern "C" {
     /// Dictionary key for the code signing identifier.
     pub static kSecCodeInfoIdentifier: CFStringRef;
@@ -562,7 +562,7 @@ unsafe extern "C" {
 // CoreFoundation extern functions
 // ---------------------------------------------------------------------------
 
-#[link(name = "CoreFoundation", kind = "framework")]
+#[cfg_attr(target_os = "macos", link(name = "CoreFoundation", kind = "framework"))]
 unsafe extern "C" {
     /// Release a Core Foundation object.
     pub fn CFRelease(cf: CFTypeRef);
