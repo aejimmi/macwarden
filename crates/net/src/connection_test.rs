@@ -1,6 +1,6 @@
 use super::*;
 use crate::rule::{NetworkAction, Protocol, RuleId};
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 
 // ---------------------------------------------------------------------------
@@ -271,4 +271,116 @@ fn test_process_identity_deser_without_new_fields() {
         p.is_valid_signature.is_none(),
         "is_valid_signature should default to None for legacy data"
     );
+}
+
+// ---------------------------------------------------------------------------
+// is_local_network
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_local_network_rfc1918_10() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1))));
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(
+        10, 255, 255, 255
+    ))));
+}
+
+#[test]
+fn test_local_network_rfc1918_172() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(172, 16, 0, 1))));
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(
+        172, 31, 255, 255
+    ))));
+    // 172.15.x.x and 172.32.x.x are NOT private
+    assert!(!is_local_network(&IpAddr::V4(Ipv4Addr::new(172, 15, 0, 1))));
+    assert!(!is_local_network(&IpAddr::V4(Ipv4Addr::new(172, 32, 0, 1))));
+}
+
+#[test]
+fn test_local_network_rfc1918_192() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(192, 168, 0, 1))));
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(
+        192, 168, 255, 255
+    ))));
+}
+
+#[test]
+fn test_local_network_loopback_v4() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::LOCALHOST)));
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(127, 0, 0, 2))));
+}
+
+#[test]
+fn test_local_network_link_local_v4() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(169, 254, 1, 1))));
+}
+
+#[test]
+fn test_local_network_unspecified_v4() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::UNSPECIFIED)));
+}
+
+#[test]
+fn test_local_network_public_v4() {
+    assert!(!is_local_network(&IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))));
+    assert!(!is_local_network(&IpAddr::V4(Ipv4Addr::new(
+        142, 250, 80, 46
+    ))));
+    assert!(!is_local_network(&IpAddr::V4(Ipv4Addr::new(1, 1, 1, 1))));
+}
+
+#[test]
+fn test_local_network_loopback_v6() {
+    assert!(is_local_network(&IpAddr::V6(Ipv6Addr::LOCALHOST)));
+}
+
+#[test]
+fn test_local_network_link_local_v6() {
+    // fe80::1
+    assert!(is_local_network(
+        &"fe80::1".parse::<IpAddr>().expect("valid")
+    ));
+}
+
+#[test]
+fn test_local_network_unique_local_v6() {
+    // fd00::1 (ULA)
+    assert!(is_local_network(
+        &"fd00::1".parse::<IpAddr>().expect("valid")
+    ));
+    // fc00::1
+    assert!(is_local_network(
+        &"fc00::1".parse::<IpAddr>().expect("valid")
+    ));
+}
+
+#[test]
+fn test_local_network_unspecified_v6() {
+    assert!(is_local_network(&IpAddr::V6(Ipv6Addr::UNSPECIFIED)));
+}
+
+#[test]
+fn test_local_network_multicast_v4() {
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(224, 0, 0, 1))));
+    assert!(is_local_network(&IpAddr::V4(Ipv4Addr::new(
+        239, 255, 255, 255
+    ))));
+}
+
+#[test]
+fn test_local_network_multicast_v6() {
+    // ff02::1 (all nodes)
+    assert!(is_local_network(
+        &"ff02::1".parse::<IpAddr>().expect("valid")
+    ));
+}
+
+#[test]
+fn test_local_network_public_v6() {
+    assert!(!is_local_network(
+        &"2001:db8::1".parse::<IpAddr>().expect("valid")
+    ));
+    assert!(!is_local_network(
+        &"2607:f8b0:4004:800::200e".parse::<IpAddr>().expect("valid")
+    ));
 }

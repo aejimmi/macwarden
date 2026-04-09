@@ -14,19 +14,34 @@ use ureq::unversioned::multipart::{Form, Part};
 /// Default public API endpoint.
 const DEFAULT_ENDPOINT: &str = "https://openbinary.org/api/v1";
 
-/// Config file location.
-const CONFIG_PATH: &str = "~/.macwarden/openbinary.toml";
+/// Config file: `~/.macwarden/config.toml`.
+const CONFIG_PATH: &str = "~/.macwarden/config.toml";
 
-/// Read the openbinary API endpoint from config, falling back to the default.
+/// Read the openbinary API endpoint from `~/.macwarden/config.toml`.
+///
+/// Looks for `[openbinary] endpoint = "..."`. Falls back to the built-in
+/// default if the file or key is missing.
 pub fn endpoint() -> String {
-    let path = resolve_config_path();
-    if let Ok(contents) = fs::read_to_string(path)
+    let resolved = resolve_path(CONFIG_PATH);
+    if let Ok(contents) = fs::read_to_string(resolved)
         && let Ok(table) = contents.parse::<toml::Table>()
-        && let Some(ep) = table.get("endpoint").and_then(|v| v.as_str())
+        && let Some(section) = table.get("openbinary").and_then(|v| v.as_table())
+        && let Some(ep) = section.get("endpoint").and_then(|v| v.as_str())
     {
         return ep.trim_end_matches('/').to_owned();
     }
     DEFAULT_ENDPOINT.to_owned()
+}
+
+/// Ping the openbinary endpoint. Returns `Ok(duration)` on success.
+pub fn ping(base: &str) -> Result<Duration> {
+    let url =
+        format!("{base}/binary/0000000000000000000000000000000000000000000000000000000000000000");
+    let start = std::time::Instant::now();
+    match ureq::get(&url).call() {
+        Ok(_) | Err(ureq::Error::StatusCode(404)) => Ok(start.elapsed()),
+        Err(e) => bail!("{e}"),
+    }
 }
 
 /// SHA256 hash a file on disk. Returns lowercase hex.
@@ -155,13 +170,13 @@ pub fn poll_job(
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn resolve_config_path() -> String {
-    if let Some(rest) = CONFIG_PATH.strip_prefix("~/")
+fn resolve_path(path: &str) -> String {
+    if let Some(rest) = path.strip_prefix("~/")
         && let Ok(home) = std::env::var("HOME")
     {
         return format!("{home}/{rest}");
     }
-    CONFIG_PATH.to_owned()
+    path.to_owned()
 }
 
 /// Safe JSON string access — returns `""` if key missing or not a string.

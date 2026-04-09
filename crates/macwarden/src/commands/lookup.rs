@@ -1,6 +1,7 @@
-//! `macwarden lookup <path>` — look up a binary on openbinary.
+//! `macwarden lookup [path]` — look up a binary on openbinary.
 //!
-//! Flow: SHA256 → GET lookup → auto-upload if unknown → poll → display.
+//! With a path: SHA256 → GET lookup → auto-upload if unknown → poll → display.
+//! Without a path: show endpoint config and test connectivity.
 
 use std::io::{Write, stderr};
 
@@ -10,6 +11,22 @@ use crate::cli::OutputFormat;
 use crate::openbinary::{
     self, AnalysisJson, JobStatus, UploadResult, extract_capabilities, extract_string_list,
 };
+
+/// Test endpoint connectivity (no path given).
+pub fn ping() -> Result<()> {
+    let base = openbinary::endpoint();
+    let source = if base == "https://openbinary.org/api/v1" {
+        "default"
+    } else {
+        "config"
+    };
+    println!("  Endpoint:  {base}  ({source})");
+    match openbinary::ping(&base) {
+        Ok(dur) => println!("  Status:    reachable ({dur:.0?})"),
+        Err(e) => bail!("unreachable: {e}"),
+    }
+    Ok(())
+}
 
 /// Run the lookup command.
 pub fn run(path: &str, no_upload: bool, format: OutputFormat) -> Result<()> {
@@ -103,7 +120,21 @@ fn print_table(a: &AnalysisJson, sha256: &str) {
     // Strip /api/v1 to get the base URL for the web link.
     let web_base = endpoint.strip_suffix("/api/v1").unwrap_or(&endpoint);
 
+    let title = a.get("title").and_then(|v| v.as_str()).unwrap_or("");
+    let summary = a.get("summary").and_then(|v| v.as_str()).unwrap_or("");
+
     println!("  {name}");
+    if !title.is_empty() {
+        println!("    {title}");
+    }
+    if !summary.is_empty() {
+        println!();
+        // Wrap summary to ~76 chars with 4-space indent.
+        for line in textwrap(summary, 72) {
+            println!("    {line}");
+        }
+    }
+    println!();
     println!(
         "    Capabilities:  {}",
         if capabilities.is_empty() {
@@ -156,6 +187,25 @@ fn summarize(items: &[String], n: usize) -> String {
         let shown: Vec<&str> = items.iter().take(n).map(String::as_str).collect();
         format!("{} (+{} more)", shown.join(", "), items.len() - n)
     }
+}
+
+/// Word-wrap text to `width` columns.
+fn textwrap(text: &str, width: usize) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut line = String::new();
+    for word in text.split_whitespace() {
+        if !line.is_empty() && line.len() + 1 + word.len() > width {
+            lines.push(std::mem::take(&mut line));
+        }
+        if !line.is_empty() {
+            line.push(' ');
+        }
+        line.push_str(word);
+    }
+    if !line.is_empty() {
+        lines.push(line);
+    }
+    lines
 }
 
 fn eprint_flush(msg: &str) {

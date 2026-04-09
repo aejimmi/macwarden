@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.2
+
+New:
+- inventory: scan installed apps and system binaries — discover, hash, verify code signatures, and flag known-bad binaries
+- inventory: batch openbinary lookup processes all unanalyzed binaries in one command
+- firewall: live per-app connection view shows active traffic grouped by application
+- firewall: drill into any app to see per-destination verdicts, ports, and tracker flags
+- firewall: quick block and unblock for apps, domains, or scoped app+domain combinations
+- firewall: import rules from LuLu for instant migration to macwarden
+- dns: cache persists across daemon restarts with crash-safe storage and warm-start loading
+- lookup: endpoint reachability test when run with no arguments
+- lookup: richer output shows title and summary from openbinary analysis
+- scoring: privacy dashboard tracks total internet connections alongside tracker count
+
 ## v0.1.1
 
 Fix:

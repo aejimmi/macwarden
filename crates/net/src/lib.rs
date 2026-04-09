@@ -28,6 +28,7 @@ pub mod geoip;
 pub mod graylist;
 pub mod group;
 pub mod host;
+pub mod import;
 pub mod matcher;
 pub mod profile;
 pub mod rule;
@@ -41,7 +42,7 @@ pub use appdb::{AppCategory, AppDb, AppProfile};
 pub use blocklist::{Blocklist, BlocklistConfig, BlocklistFormat};
 pub use connection::{
     AddressFamily, ConnectionEvent, Destination, MatchTier, MatchedRule, NetworkDecision,
-    ProcessIdentity,
+    ProcessIdentity, is_local_network,
 };
 pub use domain_trie::DomainTrie;
 pub use error::NetError;

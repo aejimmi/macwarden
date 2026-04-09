@@ -5,7 +5,7 @@
 //! detection.
 
 use std::collections::{HashMap, HashSet};
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
 
 use tracing::warn;
 
@@ -78,7 +78,7 @@ pub fn enrich_entries(entries: &mut [NetEntry]) {
             let Ok(ip) = ip_str.parse::<IpAddr>() else {
                 continue;
             };
-            if is_local_addr(&ip) {
+            if net::is_local_network(&ip) {
                 continue;
             }
             let info = geo.lookup(ip);
@@ -94,7 +94,7 @@ pub fn enrich_entries(entries: &mut [NetEntry]) {
             .iter()
             .filter_map(|e| {
                 let ip: IpAddr = e.remote_ip.as_deref()?.parse().ok()?;
-                if is_local_addr(&ip) {
+                if net::is_local_network(&ip) {
                     return None;
                 }
                 if seen.insert(ip) { Some(ip) } else { None }
@@ -186,40 +186,6 @@ fn parse_ip_port(s: &str) -> Option<(IpAddr, u16)> {
     let ip: IpAddr = ip_str.parse().ok()?;
     let port: u16 = port_str.parse().ok()?;
     Some((ip, port))
-}
-
-/// Check if an IP address is local (loopback, link-local, multicast,
-/// unspecified).
-pub fn is_local_addr(ip: &IpAddr) -> bool {
-    match ip {
-        IpAddr::V4(v4) => {
-            v4.is_loopback()
-                || v4.is_link_local()
-                || v4.is_multicast()
-                || v4.is_unspecified()
-                || is_private_v4(*v4)
-        }
-        IpAddr::V6(v6) => {
-            v6.is_loopback() || v6.is_multicast() || v6.is_unspecified() || is_link_local_v6(v6)
-        }
-    }
-}
-
-/// Check if an IPv4 address is in a private range (RFC 1918).
-fn is_private_v4(ip: Ipv4Addr) -> bool {
-    let octets = ip.octets();
-    // 10.0.0.0/8
-    octets[0] == 10
-    // 172.16.0.0/12
-    || (octets[0] == 172 && (16..=31).contains(&octets[1]))
-    // 192.168.0.0/16
-    || (octets[0] == 192 && octets[1] == 168)
-}
-
-/// Check if an IPv6 address is link-local (fe80::/10).
-fn is_link_local_v6(ip: &Ipv6Addr) -> bool {
-    let segments = ip.segments();
-    segments[0] & 0xffc0 == 0xfe80
 }
 
 // ---------------------------------------------------------------------------

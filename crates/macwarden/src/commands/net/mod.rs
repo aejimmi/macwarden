@@ -3,8 +3,11 @@
 //! Thin display wrappers around the `net` crate's rule engine.
 //! Subcommands that require more logic live in `net_scan` and `net_shield`.
 
+mod net_apps;
+mod net_block;
 mod net_enrich;
 mod net_explain;
+mod net_import;
 mod net_learn;
 mod net_lsof;
 mod net_rdns;
@@ -43,7 +46,20 @@ pub fn run(command: NetCommand) -> Result<()> {
             json,
         } => run_groups(enable.as_deref(), disable.as_deref(), json),
         NetCommand::Trackers { stats, json } => run_trackers(stats, json),
-        NetCommand::Apps { category, json } => run_apps(category.as_deref(), json),
+        NetCommand::Apps {
+            category,
+            live,
+            expand,
+            json,
+        } => {
+            if live {
+                net_apps::run_live(json)
+            } else if let Some(ref app) = expand {
+                net_apps::run_expand(app, json)
+            } else {
+                run_apps(category.as_deref(), json)
+            }
+        }
         NetCommand::Explain { process, host } => net_explain::run(&process, host.as_deref()),
         NetCommand::Learn {
             duration,
@@ -51,7 +67,17 @@ pub fn run(command: NetCommand) -> Result<()> {
             json,
         } => net_learn::run(duration.as_deref(), apply, json),
         NetCommand::Log => run_log(),
+        NetCommand::Block { app, host } => net_block::run_block(app.as_deref(), host.as_deref()),
+        NetCommand::Unblock { app, host } => {
+            net_block::run_unblock(app.as_deref(), host.as_deref())
+        }
         NetCommand::Blocklists { add, list } => run_blocklists(add.as_deref(), list),
+        NetCommand::Import {
+            source,
+            path,
+            apply,
+            json,
+        } => net_import::run(&source, path.as_deref(), apply, json),
         NetCommand::Enrich {
             key,
             remove,

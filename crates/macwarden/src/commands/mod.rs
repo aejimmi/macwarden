@@ -17,6 +17,7 @@ pub mod enable;
 pub mod enforce;
 pub mod groups;
 pub mod inspect;
+pub mod inventory;
 pub mod lookup;
 pub mod monitor;
 pub mod net;

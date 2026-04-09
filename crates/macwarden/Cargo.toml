@@ -22,6 +22,7 @@ sensors = { workspace = true }
 net = { workspace = true }
 procmon = { workspace = true }
 metrics = { workspace = true }
+inventory = { workspace = true }
 dns-lookup = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
@@ -37,6 +38,7 @@ tracing-subscriber = { workspace = true }
 libc = { workspace = true }
 ureq = { workspace = true }
 sha2 = { workspace = true }
+rayon = { workspace = true }
 notify = { workspace = true }
 signal-hook = { workspace = true }
 

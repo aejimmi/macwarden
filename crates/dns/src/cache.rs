@@ -9,6 +9,19 @@ use std::net::IpAddr;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 
+/// A snapshot of a single cache entry, suitable for persistence.
+#[derive(Debug, Clone)]
+pub struct CacheSnapshot {
+    /// The IP address key.
+    pub ip: IpAddr,
+    /// The hostname value.
+    pub hostname: String,
+    /// Original TTL for this entry.
+    pub ttl: Duration,
+    /// Time remaining before this entry expires.
+    pub remaining: Duration,
+}
+
 /// Default cache capacity.
 const DEFAULT_CAPACITY: usize = 10_000;
 
@@ -168,6 +181,34 @@ impl DnsCache {
             .read()
             .expect("dns cache lock poisoned on capacity");
         inner.capacity
+    }
+
+    /// Snapshot all non-expired entries for persistence.
+    ///
+    /// Returns entries sorted by most-recently-used first.
+    pub fn entries(&self) -> Vec<CacheSnapshot> {
+        let inner = self
+            .inner
+            .read()
+            .expect("dns cache lock poisoned on entries");
+        inner
+            .order
+            .iter()
+            .filter_map(|ip| {
+                let entry = inner.map.get(ip)?;
+                if entry.is_expired() {
+                    return None;
+                }
+                let elapsed = entry.inserted_at.elapsed();
+                let remaining = entry.ttl.saturating_sub(elapsed);
+                Some(CacheSnapshot {
+                    ip: *ip,
+                    hostname: entry.hostname.clone(),
+                    ttl: entry.ttl,
+                    remaining,
+                })
+            })
+            .collect()
     }
 
     /// Remove all entries from the cache.

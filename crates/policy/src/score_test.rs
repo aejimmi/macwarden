@@ -29,6 +29,7 @@ fn best_case_input() -> ScoreInput {
         network: Some(NetworkState {
             shield_enabled: true,
             tracker_connections: 0,
+            internet_connections: 0,
         }),
     }
 }
@@ -56,6 +57,7 @@ fn worst_case_input() -> ScoreInput {
         network: Some(NetworkState {
             shield_enabled: false,
             tracker_connections: 50,
+            internet_connections: 0,
         }),
     }
 }
@@ -109,6 +111,7 @@ fn test_compute_score_total_equals_sum_of_earned() {
         network: Some(NetworkState {
             shield_enabled: true,
             tracker_connections: 3,
+            internet_connections: 0,
         }),
     };
     let result = compute_score(&input);
@@ -220,6 +223,7 @@ fn test_compute_score_only_network_available() {
         network: Some(NetworkState {
             shield_enabled: true,
             tracker_connections: 0,
+            internet_connections: 0,
         }),
     };
     let result = compute_score(&input);
@@ -368,6 +372,7 @@ fn test_compute_score_is_deterministic() {
         network: Some(NetworkState {
             shield_enabled: false,
             tracker_connections: 5,
+            internet_connections: 0,
         }),
     };
 

@@ -193,17 +193,25 @@ fn collect_devices_inner() -> Result<DeviceState> {
 /// Collect network shield state and active tracker connection count.
 pub fn collect_network() -> NetworkState {
     let shield = super::net::net_shield::load_shield_config();
-    let tracker_connections = count_tracker_connections();
+    let entries = collect_raw_connections();
+    let tracker_connections = entries.iter().filter(|e| e.tracker.is_some()).count() as u32;
+
+    // Count internet (non-local) connections using the canonical check.
+    let internet_connections = entries
+        .iter()
+        .filter(|e| {
+            e.remote_ip
+                .as_deref()
+                .and_then(|s| s.parse::<std::net::IpAddr>().ok())
+                .is_some_and(|ip| !net::is_local_network(&ip))
+        })
+        .count() as u32;
+
     NetworkState {
         shield_enabled: shield.enabled,
         tracker_connections,
+        internet_connections,
     }
-}
-
-/// Count active connections to known tracker domains.
-fn count_tracker_connections() -> u32 {
-    let entries = collect_raw_connections();
-    entries.iter().filter(|e| e.tracker.is_some()).count() as u32
 }
 
 /// Collect listening ports and outbound connections.

@@ -223,7 +223,7 @@ fn lookup_network_usage(_pid: u32) -> (Option<u64>, Option<u64>) {
 // ---------------------------------------------------------------------------
 
 /// Evaluate a single lsof connection against the rule set and tracker DB.
-fn evaluate_connection(
+pub(crate) fn evaluate_connection(
     conn: LsofConnection,
     rule_set: &net::RuleSet,
     tracker_db: &TrackerDatabase,
@@ -278,8 +278,12 @@ fn evaluate_connection(
         .as_deref()
         .and_then(|h| tracker_db.lookup(h).map(|m| m.category.to_string()));
 
-    // GeoIP enrichment
-    let geo_info = geo.map_or_else(Default::default, |g| g.lookup(ip));
+    // GeoIP enrichment — skip for local network IPs (always returns None).
+    let geo_info = if net::is_local_network(&ip) {
+        net::GeoInfo::default()
+    } else {
+        geo.map_or_else(Default::default, |g| g.lookup(ip))
+    };
 
     // Service name for the port
     let service = net::services::service_name(conn.remote_port).map(ToOwned::to_owned);
@@ -318,7 +322,17 @@ fn print_scan_table(entries: &[ScanEntry]) {
             port: format_port(e.port, e.service.as_deref()),
             bytes_in: format_bytes(e.bytes_in.unwrap_or(0)),
             bytes_out: format_bytes(e.bytes_out.unwrap_or(0)),
-            country: e.country.clone().unwrap_or_else(|| "-".to_owned()),
+            country: e.country.clone().unwrap_or_else(|| {
+                // Show "LAN" for local network IPs instead of "-".
+                if e.destination
+                    .parse::<std::net::IpAddr>()
+                    .is_ok_and(|ip| net::is_local_network(&ip))
+                {
+                    "LAN".to_owned()
+                } else {
+                    "-".to_owned()
+                }
+            }),
             owner: e
                 .asn_name
                 .as_deref()

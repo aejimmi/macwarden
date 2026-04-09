@@ -4,7 +4,7 @@
 //! decision the matcher produces.
 
 use std::fmt;
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 use std::time::SystemTime;
 
@@ -218,6 +218,54 @@ impl fmt::Display for NetworkDecision {
         };
         write!(f, "{action}: {}", self.explanation)
     }
+}
+
+// ---------------------------------------------------------------------------
+// Local network detection
+// ---------------------------------------------------------------------------
+
+/// Returns `true` if the IP address belongs to a local/private network.
+///
+/// Matches:
+/// - IPv4: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (RFC 1918)
+/// - IPv4: `127.0.0.0/8` (loopback)
+/// - IPv4: `169.254.0.0/16` (link-local)
+/// - IPv6: `::1` (loopback)
+/// - IPv6: `fe80::/10` (link-local)
+/// - IPv6: `fc00::/7` (unique local address)
+#[must_use]
+pub fn is_local_network(ip: &IpAddr) -> bool {
+    match *ip {
+        IpAddr::V4(v4) => is_local_v4(v4),
+        IpAddr::V6(v6) => is_local_v6(v6),
+    }
+}
+
+/// IPv4 local/private network check.
+fn is_local_v4(ip: Ipv4Addr) -> bool {
+    let octets = ip.octets();
+    matches!(
+        octets,
+        [10 | 127 | 224..=239, ..] // 10.0.0.0/8, loopback, multicast
+        | [172, 16..=31, ..] // 172.16.0.0/12
+        | [192, 168, ..] // 192.168.0.0/16
+        | [169, 254, ..] // link-local
+        | [0, 0, 0, 0] // unspecified
+    )
+}
+
+/// IPv6 local/private network check.
+fn is_local_v6(ip: Ipv6Addr) -> bool {
+    if ip.is_loopback() || ip.is_unspecified() || ip.is_multicast() {
+        return true;
+    }
+    let segments = ip.segments();
+    // fe80::/10 (link-local)
+    if segments[0] & 0xffc0 == 0xfe80 {
+        return true;
+    }
+    // fc00::/7 (unique local)
+    segments[0] & 0xfe00 == 0xfc00
 }
 
 #[cfg(test)]

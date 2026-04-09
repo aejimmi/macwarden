@@ -54,6 +54,8 @@ pub struct NetworkState {
     pub shield_enabled: bool,
     /// Number of active tracker connections detected.
     pub tracker_connections: u32,
+    /// Total outbound internet connections (excludes local/private network).
+    pub internet_connections: u32,
 }
 
 /// Aggregated input for scoring — each dimension is optional.
@@ -322,10 +324,17 @@ fn format_devices_label(d: &DeviceState) -> String {
 /// Human label for network dimension.
 fn format_network_label(n: &NetworkState) -> String {
     let shield = if n.shield_enabled { "on" } else { "off" };
-    format!(
-        "shield {shield}, {} tracker connections",
-        n.tracker_connections
-    )
+    if n.internet_connections > 0 {
+        format!(
+            "shield {shield}, {} internet connections, {} trackers",
+            n.internet_connections, n.tracker_connections
+        )
+    } else {
+        format!(
+            "shield {shield}, {} tracker connections",
+            n.tracker_connections
+        )
+    }
 }
 
 /// Format bytes as human-readable (1024-based).

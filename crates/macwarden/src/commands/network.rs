@@ -130,7 +130,7 @@ pub fn run(format: OutputFormat, all: bool) -> Result<()> {
                 e.remote_ip.as_deref().is_none_or(|ip_str| {
                     ip_str
                         .parse::<std::net::IpAddr>()
-                        .is_ok_and(|ip| !super::network_enrich::is_local_addr(&ip))
+                        .is_ok_and(|ip| !net::is_local_network(&ip))
                 })
             })
             .collect()

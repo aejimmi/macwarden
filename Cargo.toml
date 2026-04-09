@@ -12,6 +12,7 @@ members = [
     "crates/es",
     "crates/metrics",
     "crates/dns",
+    "crates/inventory",
 ]
 resolver = "2"
 
@@ -67,8 +68,10 @@ procmon = { path = "crates/procmon" }
 es = { path = "crates/es" }
 metrics = { path = "crates/metrics" }
 dns = { path = "crates/dns" }
+inventory = { path = "crates/inventory" }
 
 # Database
+etchdb = "0.3"
 rusqlite = { version = "0.35", features = ["bundled"] }
 
 # Networking
@@ -80,6 +83,10 @@ ureq = { version = "3", features = ["json", "multipart"] }
 # Archive extraction
 flate2 = "1.1"
 tar = "0.4"
+
+# Parallelism
+rayon = "1.10"
+jwalk = "0.8"
 
 # Hashing
 sha2 = "0.10"

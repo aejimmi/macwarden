@@ -83,7 +83,7 @@
 
 ## Network Firewall
 
-- 10 net subcommands — scan, shield, rules, groups, trackers, apps, explain, log, learn, blocklists.
+- 14 net subcommands — scan, shield, rules, groups, trackers, apps, explain, log, learn, block, unblock, blocklists, import, enrich.
 - Five-tier rule matching — exact deny, exact allow, glob deny, glob allow, default action. First match wins with full transparency.
 - Tracker shield — one-command protection against advertising, analytics, fingerprinting, and social tracking domains across 4 curated categories.
 - 9 network rule groups — pre-built rule sets for browser essentials, communication, development, gaming, iCloud services, location services, macOS system services, media streaming, and productivity.
@@ -96,6 +96,10 @@
 - Rule explanation — `net explain` shows why a specific connection would be allowed or denied.
 - Rule learning — `net learn` watches live connections and suggests firewall rules from observed traffic.
 - Blocklist subscriptions — import external domain blocklists in hosts format or domain-list format.
+- LuLu rule import — `net import lulu` reads rules from the LuLu open-source firewall and converts them to macwarden rules, giving users an instant migration path.
+- GeoIP database management — `net enrich` downloads MaxMind GeoLite2-Country and ASN databases; `--status` shows current database info; `--remove` cleans up.
+- Local network detection — RFC 1918, loopback, link-local, and multicast addresses are identified and excluded from GeoIP lookups, privacy scoring, and tracker analysis.
+- Quick block/unblock — `net block --app Safari --host tracker.com` creates a deny rule; `net unblock` removes it.
 
 ## Network Visibility
 
@@ -121,7 +125,9 @@
 ## DNS Cache
 
 - Passive DNS cache — maps IP addresses to hostnames from Endpoint Security network events, no active queries needed.
-- LRU eviction — bounded memory usage with configurable capacity.
+- LRU eviction — bounded memory usage with configurable capacity (default 10,000 entries).
+- Crash-safe persistence — etchdb WAL-backed store flushes cache to disk every 60 seconds, surviving daemon restarts and crashes.
+- Warm-start loading — persisted entries are restored on startup with TTL adjusted for elapsed time since last flush.
 - DNS wire parser — RFC 1035 response parser for future BPF/pcap integration on port 53.
 
 ## Metrics
@@ -137,7 +143,7 @@
 - Service scoring — measures how many recommended and optional service groups are disabled vs. active.
 - Trace scoring — measures disk footprint of forensic artifacts across 12 artifact domains.
 - Device scoring — counts camera and microphone access grants, penalizes actively running authorized apps.
-- Network scoring — rewards enabled tracker shield, penalizes active tracker connections.
+- Network scoring — rewards enabled tracker shield, penalizes active tracker connections, reports total internet vs. local connections.
 - Actionable recommendations — each score includes specific macwarden commands to improve it, with estimated point gains.
 
 ## Hardware Sensors
@@ -148,17 +154,34 @@
 - Network context aggregation — combines WiFi, Bluetooth, and power state into a single context snapshot.
 - Event debouncing — suppresses repeated sensor alerts within configurable time windows.
 
+## Binary Inventory
+
+- Application and system binary discovery — scans /Applications, ~/Applications, /usr/bin, /usr/sbin, /usr/libexec, /usr/local/bin, and /opt/homebrew/bin.
+- Full filesystem scan — `inventory scan --all` uses Spotlight (`mdfind`) plus targeted system directory reads for fast, comprehensive discovery without recursive filesystem walks.
+- App bundle parsing — extracts name, version, identifier, and executable path from macOS `.app` bundle Info.plist files.
+- SHA-256 hashing — streaming 64KB-chunk hashing for integrity checking and blocklist comparison.
+- Hash blocklist — checks discovered binaries against a known-bad hash list (`knowledge/blocklists/hashes.txt`).
+- Persistent inventory store — etchdb WAL-backed storage at `~/.macwarden/inventory/` preserves expensive openbinary analysis results across scans.
+- Store reconciliation — each scan adds new binaries, updates changed ones, and removes stale entries while preserving accumulated analysis data.
+- Batch openbinary lookup — `inventory lookup` processes all unanalyzed binaries through the openbinary API, with `--no-upload` for check-only mode.
+- Inline scan + lookup — `inventory scan --lookup` discovers, hashes, and immediately analyzes unanalyzed binaries in one pass.
+- Code signing verification — validates Apple and third-party signatures during scan, flags unsigned or broken-signature binaries.
+- Sealed volume optimization — skips code signing checks for binaries on the macOS sealed system volume (`/usr/bin`, `/usr/sbin`, `/usr/libexec`, `/System/`) where OS guarantees integrity.
+- Grouped scan output — applications shown individually with version, team ID, and hash; system binaries summarized by directory with counts; blocklisted and invalid-signature binaries promoted to a flagged section.
+
 ## Binary Analysis
 
 - Framework extraction — lists linked frameworks for any service binary via `otool -L`.
 - Telemetry string scan — searches service binaries for 8 known telemetry keywords and Apple analytics domains.
 - Openbinary lookup — hashes a binary, checks the openbinary database, and auto-uploads for behavioral analysis if unknown.
+- Endpoint connectivity test — `lookup` with no arguments shows the configured openbinary endpoint and tests reachability with round-trip timing.
 
 ## CLI
 
-- 14 commands — scan, info, use, block, allow, watch, scrub, undo, network, devices, net, status, lookup.
+- 16 commands — scan, info, use, block, allow, watch, scrub, undo, network, devices, net, status, lookup, inventory scan, inventory lookup.
 - Scan filtering — filter services by category, show only unknown/uncategorized services, or view by group.
 - Group sorting — sort groups by name, service count, running count, or safety level.
 - Dual output formats — human-readable tables with rounded borders or JSON for scripting.
 - Smart target resolution — `info` auto-detects whether the argument is a profile, group, or service label.
 - Service detail view — shows domain, state, category, safety, PID, plist path, process CPU/memory, open files, XPC endpoints, and KeepAlive status.
+- Unified configuration — single `~/.macwarden/config.toml` for all settings (openbinary endpoint, etc.) with sensible built-in defaults.

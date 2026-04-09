@@ -1,0 +1,6 @@
+# Known-bad binary SHA-256 hashes.
+#
+# One lowercase hex hash per line. Lines starting with # are comments.
+# Add hashes of known malware, unwanted software, or compromised binaries.
+#
+# User-specific hashes go in ~/.macwarden/blocklists/hashes.txt

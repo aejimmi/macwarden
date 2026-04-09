@@ -209,6 +209,39 @@ fn test_lookup_missing_returns_none() {
 }
 
 // ---------------------------------------------------------------------------
+// AppDb::lookup_by_name
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_lookup_by_name_exact() {
+    let db = AppDb::load_builtin().expect("builtin profiles should load");
+    let safari = db.lookup_by_name("Safari").expect("should find Safari");
+    assert_eq!(safari.code_id, "com.apple.Safari");
+}
+
+#[test]
+fn test_lookup_by_name_case_insensitive() {
+    let db = AppDb::load_builtin().expect("builtin profiles should load");
+    let chrome = db.lookup_by_name("chrome").expect("should find Chrome");
+    assert_eq!(chrome.code_id, "com.google.Chrome");
+}
+
+#[test]
+fn test_lookup_by_name_substring() {
+    let db = AppDb::load_builtin().expect("builtin profiles should load");
+    let firefox = db
+        .lookup_by_name("fire")
+        .expect("should find Firefox via substring");
+    assert_eq!(firefox.code_id, "org.mozilla.firefox");
+}
+
+#[test]
+fn test_lookup_by_name_missing() {
+    let db = AppDb::load_builtin().expect("builtin profiles should load");
+    assert!(db.lookup_by_name("NonExistentApp12345").is_none());
+}
+
+// ---------------------------------------------------------------------------
 // AppCategory::Display
 // ---------------------------------------------------------------------------
 

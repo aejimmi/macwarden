@@ -100,6 +100,27 @@ impl AppDb {
     pub fn is_empty(&self) -> bool {
         self.profiles.is_empty()
     }
+
+    /// Look up an app profile by display name (case-insensitive substring match).
+    ///
+    /// Returns the first profile whose `name` contains the query string,
+    /// ignoring case. Useful for resolving friendly names like "Safari" or
+    /// "spotify" from CLI input.
+    pub fn lookup_by_name(&self, name: &str) -> Option<&AppProfile> {
+        let query = name.to_ascii_lowercase();
+        // Prefer exact match first.
+        if let Some(p) = self
+            .profiles
+            .iter()
+            .find(|p| p.name.to_ascii_lowercase() == query)
+        {
+            return Some(p);
+        }
+        // Fall back to substring match.
+        self.profiles
+            .iter()
+            .find(|p| p.name.to_ascii_lowercase().contains(&query))
+    }
 }
 
 #[cfg(test)]

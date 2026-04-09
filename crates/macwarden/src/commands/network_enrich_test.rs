@@ -1,5 +1,5 @@
 #![allow(clippy::indexing_slicing, clippy::ip_constant)]
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{IpAddr, Ipv4Addr};
 
 use super::*;
 
@@ -66,77 +66,7 @@ fn test_parse_remote_high_port() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// is_local_addr
-// ---------------------------------------------------------------------------
-
-#[test]
-fn test_is_local_addr_loopback_v4() {
-    let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_loopback_v6() {
-    let ip = IpAddr::V6(Ipv6Addr::LOCALHOST);
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_link_local_v4() {
-    let ip = IpAddr::V4(Ipv4Addr::new(169, 254, 1, 1));
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_link_local_v6() {
-    let ip: IpAddr = "fe80::1".parse().expect("valid link-local IPv6");
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_private_10() {
-    let ip = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_private_172() {
-    let ip = IpAddr::V4(Ipv4Addr::new(172, 16, 0, 1));
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_private_192() {
-    let ip = IpAddr::V4(Ipv4Addr::new(192, 168, 1, 1));
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_multicast_v4() {
-    let ip = IpAddr::V4(Ipv4Addr::new(224, 0, 0, 1));
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_unspecified_v4() {
-    let ip = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
-    assert!(is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_public_v4() {
-    let ip = IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8));
-    assert!(!is_local_addr(&ip));
-}
-
-#[test]
-fn test_is_local_addr_public_v6() {
-    let ip: IpAddr = "2607:f8b0:4004:800::200e"
-        .parse()
-        .expect("valid public IPv6");
-    assert!(!is_local_addr(&ip));
-}
+// is_local_addr tests removed — consolidated into net::connection_test
 
 // ---------------------------------------------------------------------------
 // display_process

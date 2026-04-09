@@ -191,17 +191,28 @@ enum Commands {
 
     /// Look up a binary on openbinary for behavioral analysis.
     ///
-    /// Hashes the file, checks the openbinary database, and auto-uploads
-    /// for analysis if not found. Use --no-upload to skip uploading.
+    /// With no arguments, shows the configured endpoint and tests
+    /// connectivity. With a path, hashes the file, checks the openbinary
+    /// database, and auto-uploads for analysis if not found.
     Lookup {
-        /// Path to the binary to look up.
-        path: String,
+        /// Path to the binary to look up. Omit to test endpoint connectivity.
+        path: Option<String>,
         /// Do not upload if the binary is unknown — just report.
         #[arg(long)]
         no_upload: bool,
         /// Output format.
         #[arg(short, long, default_value = "table")]
         format: OutputFormat,
+    },
+
+    /// Binary inventory — scan installed apps and system binaries.
+    ///
+    /// Discover executables, hash them, verify code signing, and check
+    /// against the known-bad hash blocklist. Use `inventory lookup` to
+    /// batch-process the inventory through openbinary.
+    Inventory {
+        #[command(subcommand)]
+        command: commands::inventory::InventoryCommand,
     },
 
     /// Network firewall — rules, groups, trackers, apps, explain.
@@ -271,11 +282,17 @@ pub enum NetCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Show app categories.
+    /// Show app categories, live connections grouped by app, or per-app details.
     Apps {
-        /// Filter by category.
+        /// Filter by category (default mode).
         #[arg(long)]
         category: Option<String>,
+        /// Show live connections grouped by application.
+        #[arg(long)]
+        live: bool,
+        /// Expand a specific app to show per-destination details.
+        #[arg(long)]
+        expand: Option<String>,
         /// Output as JSON.
         #[arg(long)]
         json: bool,
@@ -309,6 +326,47 @@ pub enum NetCommand {
         /// List configured blocklists.
         #[arg(long)]
         list: bool,
+    },
+    /// Block an app or destination in the network firewall.
+    ///
+    /// Creates a deny rule in ~/.macwarden/net-rules/. Use --app to
+    /// target a specific application, --host for a domain, or both
+    /// for a scoped app+destination rule.
+    Block {
+        /// App name or code signing identity to block.
+        #[arg(long)]
+        app: Option<String>,
+        /// Destination hostname to block.
+        #[arg(long)]
+        host: Option<String>,
+    },
+    /// Unblock a previously blocked app or destination.
+    ///
+    /// Removes the matching deny rule from ~/.macwarden/net-rules/.
+    Unblock {
+        /// App name or code signing identity to unblock.
+        #[arg(long)]
+        app: Option<String>,
+        /// Destination hostname to unblock.
+        #[arg(long)]
+        host: Option<String>,
+    },
+    /// Import rules from an external firewall application.
+    ///
+    /// Reads rules from LuLu's rules.json and converts them to macwarden
+    /// user rules in ~/.macwarden/net-rules/.
+    Import {
+        /// Source firewall to import from (currently: "lulu").
+        source: String,
+        /// Path to the rules file (auto-detected if omitted).
+        #[arg(long)]
+        path: Option<String>,
+        /// Write converted rules to disk (default: dry-run preview).
+        #[arg(long)]
+        apply: bool,
+        /// Output as JSON.
+        #[arg(long)]
+        json: bool,
     },
     /// Download or update GeoIP databases for IP enrichment.
     ///
@@ -492,10 +550,14 @@ pub fn run() -> Result<()> {
         },
 
         Some(Commands::Lookup {
-            path,
+            path: Some(path),
             no_upload,
             format,
         }) => commands::lookup::run(&path, no_upload, format),
+
+        Some(Commands::Lookup { path: None, .. }) => commands::lookup::ping(),
+
+        Some(Commands::Inventory { ref command }) => commands::inventory::run(command),
 
         Some(Commands::Net { command }) => commands::net::run(command),
     }
