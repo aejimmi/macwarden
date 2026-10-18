@@ -1,20 +1,20 @@
 use super::*;
 use std::net::{IpAddr, Ipv4Addr};
 
-/// Helper: skip test if geo databases are not installed locally.
-fn require_geo() -> GeoLookup {
+/// Helper: `None` when geo databases are not installed locally, so the caller
+/// can vacuously return. Never `std::process::exit` — that would terminate the
+/// whole test binary and silently mark every following test as passed.
+fn require_geo() -> Option<GeoLookup> {
     if !databases_available() {
         eprintln!("SKIP: geo databases not installed at ~/.macwarden/geo/");
-        // Return early — test passes vacuously when DBs are absent.
-        // This avoids CI failures on machines without GeoLite2 downloads.
-        std::process::exit(0);
+        return None;
     }
-    GeoLookup::new().expect("databases should load when files exist")
+    Some(GeoLookup::new().expect("databases should load when files exist"))
 }
 
 #[test]
 fn test_lookup_google_dns() {
-    let geo = require_geo();
+    let Some(geo) = require_geo() else { return };
     let info = geo.lookup(IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8)));
     assert_eq!(info.country.as_deref(), Some("US"));
     assert!(
@@ -28,7 +28,7 @@ fn test_lookup_google_dns() {
 
 #[test]
 fn test_lookup_cloudflare_dns() {
-    let geo = require_geo();
+    let Some(geo) = require_geo() else { return };
     let info = geo.lookup(IpAddr::V4(Ipv4Addr::new(1, 1, 1, 1)));
     // Cloudflare DNS is anycast, country may vary, but ASN should be present.
     assert!(
@@ -39,7 +39,7 @@ fn test_lookup_cloudflare_dns() {
 
 #[test]
 fn test_lookup_private_ip_returns_defaults() {
-    let geo = require_geo();
+    let Some(geo) = require_geo() else { return };
     let info = geo.lookup(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 1)));
     assert!(info.country.is_none(), "private IP has no country");
     assert!(info.asn_name.is_none(), "private IP has no ASN");

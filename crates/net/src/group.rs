@@ -34,6 +34,8 @@ const MEDIA_STREAMING_TOML: &str =
 const PRODUCTIVITY_TOML: &str = include_str!("../../../knowledge/network/groups/productivity.toml");
 const COMMUNICATION_TOML: &str =
     include_str!("../../../knowledge/network/groups/communication.toml");
+const LOCATION_SERVICES_TOML: &str =
+    include_str!("../../../knowledge/network/groups/location-services.toml");
 
 /// All builtin group TOML sources.
 const BUILTIN_GROUP_SOURCES: &[&str] = &[
@@ -45,6 +47,7 @@ const BUILTIN_GROUP_SOURCES: &[&str] = &[
     MEDIA_STREAMING_TOML,
     PRODUCTIVITY_TOML,
     COMMUNICATION_TOML,
+    LOCATION_SERVICES_TOML,
 ];
 
 // ---------------------------------------------------------------------------

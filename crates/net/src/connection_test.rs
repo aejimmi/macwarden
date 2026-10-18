@@ -68,6 +68,7 @@ fn test_process_identity_display_with_code_id() {
         code_id: Some("com.apple.Safari".to_owned()),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     };
     let s = p.to_string();
     assert!(s.contains("com.apple.Safari"), "should show code_id");
@@ -83,6 +84,7 @@ fn test_process_identity_display_without_code_id() {
         code_id: None,
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     };
     let s = p.to_string();
     assert!(
@@ -192,6 +194,7 @@ fn test_process_identity_with_team_id() {
         code_id: Some("com.google.Chrome".to_owned()),
         team_id: Some("EQHXZ8M8AV".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     assert_eq!(p.team_id.as_deref(), Some("EQHXZ8M8AV"));
     assert_eq!(p.is_valid_signature, Some(true));
@@ -206,6 +209,7 @@ fn test_process_identity_display_with_team_id() {
         code_id: Some("com.google.Chrome".to_owned()),
         team_id: Some("EQHXZ8M8AV".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     let s = p.to_string();
     assert!(
@@ -228,6 +232,7 @@ fn test_process_identity_display_no_team_id_unchanged() {
         code_id: Some("com.apple.Safari".to_owned()),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     };
     let s = p.to_string();
     assert!(
@@ -246,6 +251,7 @@ fn test_process_identity_serde_round_trip_with_new_fields() {
         code_id: Some("com.google.Chrome".to_owned()),
         team_id: Some("EQHXZ8M8AV".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     let json = serde_json::to_string(&p).expect("serialize");
     let back: ProcessIdentity = serde_json::from_str(&json).expect("deserialize");

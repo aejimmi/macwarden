@@ -14,6 +14,7 @@
 //! - [`safelist`] — Essential domains that are never blocked (OCSP, NTP, etc.)
 //! - [`group`] — Network rule groups (toggleable bundles of related rules)
 //! - [`profile`] — Network profile section (parses and resolves `[network]` TOML)
+//! - [`policy`] — Persisted policy config (global mode, allow-list, Apple/DNS flags)
 //! - [`geoip`] — GeoIP lookups (country, ASN) via MaxMind databases on disk
 //! - [`services`] — Well-known port to service name mapping
 //! - [`es_event`] — Parser for ES `RESERVED_5` network AUTH event payloads
@@ -24,16 +25,20 @@ pub mod connection;
 pub mod domain_trie;
 pub mod error;
 pub mod es_event;
+pub mod fsperm;
 pub mod geoip;
 pub mod graylist;
 pub mod group;
 pub mod host;
 pub mod import;
+pub mod loader;
 pub mod matcher;
+pub mod policy;
 pub mod profile;
 pub mod rule;
 pub mod safelist;
 pub mod services;
+pub mod shield;
 pub mod tracker;
 pub mod user_rule;
 
@@ -47,10 +52,16 @@ pub use connection::{
 pub use domain_trie::DomainTrie;
 pub use error::NetError;
 pub use es_event::{ParsedNetworkEvent, parse_reserved5_event};
+pub use fsperm::{secure_dir, secure_file};
 pub use geoip::{GeoInfo, GeoLookup, databases_available, geo_dir};
 pub use group::{NetworkGroup, NetworkGroupRule, NetworkGroups};
 pub use host::HostPattern;
+pub use loader::{base_profile, build_base_ruleset, load_live_ruleset};
 pub use matcher::{BlocklistEntry, BreakageRisk, GroupedRule, RuleSet, TrackerRule};
+pub use policy::{
+    ALLOWLIST_RULE_ID_BASE, AllowListEntry, PolicyConfig, PolicyMode, is_apple_code_id,
+    parse_ip_or_cidr,
+};
 pub use profile::{
     BlocklistSettings, GroupSettings, NetworkProfile, ProfileNetworkRule, ProfileProcess,
     TrackerSettings,
@@ -59,6 +70,7 @@ pub use rule::{
     DestMatcher, NetworkAction, NetworkRule, PortMatcher, ProcessMatcher, Protocol, RuleDuration,
     RuleId,
 };
+pub use shield::ShieldConfig;
 pub use tracker::{
     TrackerCategory, TrackerCategoryData, TrackerDatabase, TrackerDomain, TrackerMatch,
 };

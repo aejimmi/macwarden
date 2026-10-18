@@ -8,16 +8,22 @@ members = [
     "crates/sensors",
     "crates/appdb",
     "crates/net",
+    "crates/banwatch",
     "crates/procmon",
     "crates/es",
     "crates/metrics",
     "crates/dns",
     "crates/inventory",
+    "crates/ipc",
+    "crates/netsample",
+    "crates/macwarden-ui",
+    "crates/capture",
+    "crates/enforce-ne-ffi",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.94.0"
 license = "GPL-3.0-only"
@@ -64,11 +70,20 @@ snapshot = { path = "crates/snapshot" }
 sensors = { path = "crates/sensors" }
 appdb = { path = "crates/appdb" }
 net = { path = "crates/net" }
+banwatch = { path = "crates/banwatch" }
 procmon = { path = "crates/procmon" }
 es = { path = "crates/es" }
 metrics = { path = "crates/metrics" }
 dns = { path = "crates/dns" }
 inventory = { path = "crates/inventory" }
+ipc = { path = "crates/ipc" }
+netsample = { path = "crates/netsample" }
+macwarden-ui = { path = "crates/macwarden-ui" }
+enforce-ne-ffi = { path = "crates/enforce-ne-ffi" }
+capture = { path = "crates/capture" }
+
+# OpenBinary SDK (sibling checkout — not yet on GitHub; known CI limitation)
+openbinary-agent-core = { path = "../openbinary-agent/crates/openbinary-agent-core" }
 
 # Database
 etchdb = "0.3"
@@ -79,6 +94,15 @@ ipnet = { version = "2", features = ["serde"] }
 dns-lookup = "3.0"
 maxminddb = "0.27"
 ureq = { version = "3", features = ["json", "multipart"] }
+
+# System
+sysinfo = "0.33"
+
+# Packet capture / parse (packet-trace, crates/capture)
+# `etherparse` pinned to sniffnet's version so the reused L2/L3/L4 parse path
+# and the future Tier-2 spec share one dependency.
+etherparse = "0.19"
+tls-parser = "0.12"
 
 # Archive extraction
 flate2 = "1.1"
@@ -121,6 +145,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # System
 libc = "0.2"
+
+# Concurrency
+arc-swap = "1.7"
 
 # File watching
 notify = { version = "8.2", default-features = false, features = ["macos_fsevent"] }

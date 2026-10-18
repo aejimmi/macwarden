@@ -1,0 +1,31 @@
+[package]
+name = "ipc"
+description = "Daemon↔panel IPC protocol for macwarden — wire DTOs, JSON-lines codec, client/server helpers. Pure Rust, serde only, tests on Linux CI."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+# Peer-credential (getpeereid) helper only — the sole platform dependency, and
+# only on unix. The non-unix core (protocol, codec, validators, selection) has
+# zero platform deps so it builds and tests on Linux CI with serde alone.
+[target.'cfg(unix)'.dependencies]
+libc = { workspace = true }
+
+# R2 Layer 2 (audit-token code-signature verification) is macOS-only and links
+# Security + CoreFoundation there; its warn/debug logging uses tracing. Kept
+# behind cfg(target_os = "macos") so the Linux build stays serde + libc only,
+# with zero Security linkage.
+[target.'cfg(target_os = "macos")'.dependencies]
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

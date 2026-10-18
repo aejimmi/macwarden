@@ -13,6 +13,17 @@ workspace = true
 name = "macwarden"
 path = "src/main.rs"
 
+# `capture-live` is ON by default so real users get live BPF capture out of the
+# box (no flag to discover). Linux CI stays clean because the vendored `pcap`
+# dep is target-gated to macOS in `crates/capture` — the feature turns on, but
+# the platform gate leaves `pcap` out of the non-macOS graph, and the live code
+# in `packet_source.rs` is additionally `all(feature = "capture-live", macos)`.
+# At runtime the daemon prefers the real `LiveSource` when it has BPF access
+# (root / `access_bpf`), else falls back to the `DemoSource` (clearly labeled).
+[features]
+default = ["capture-live"]
+capture-live = ["capture/capture-live"]
+
 [dependencies]
 policy = { workspace = true }
 catalog = { workspace = true }
@@ -20,11 +31,19 @@ launchd = { workspace = true }
 snapshot = { workspace = true }
 sensors = { workspace = true }
 net = { workspace = true }
+banwatch = { workspace = true }
 procmon = { workspace = true }
 metrics = { workspace = true }
 inventory = { workspace = true }
+ipc = { workspace = true }
+netsample = { workspace = true }
+macwarden-ui = { workspace = true }
+capture = { workspace = true }
+etherparse = { workspace = true }
+openbinary-agent-core = { workspace = true }
 dns-lookup = { workspace = true }
 anyhow = { workspace = true }
+thiserror = { workspace = true }
 clap = { workspace = true }
 flate2 = { workspace = true }
 tar = { workspace = true }
@@ -41,6 +60,7 @@ sha2 = { workspace = true }
 rayon = { workspace = true }
 notify = { workspace = true }
 signal-hook = { workspace = true }
+sysinfo = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }

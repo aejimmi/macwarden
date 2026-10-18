@@ -20,6 +20,7 @@ fn make_process(path: &str, code_id: Option<&str>) -> ProcessIdentity {
         code_id: code_id.map(ToOwned::to_owned),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     }
 }
 

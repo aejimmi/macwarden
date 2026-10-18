@@ -88,15 +88,26 @@ fn test_group_domain_count_multiple_rules() {
 
 #[test]
 fn test_base_profile_defaults_to_log() {
-    let profile = base_profile();
+    // With the default (Allow-All) policy, the Tier-5 default is Log.
+    let profile = net::base_profile(&net::PolicyConfig::default(), &net::ShieldConfig::default());
     assert_eq!(profile.default, NetworkAction::Log);
     assert!(profile.rules.is_empty());
 }
 
 #[test]
+fn test_base_profile_block_mode_defaults_to_deny() {
+    let config = net::PolicyConfig {
+        mode: net::PolicyMode::BlockAll,
+        ..net::PolicyConfig::default()
+    };
+    let profile = net::base_profile(&config, &net::ShieldConfig::default());
+    assert_eq!(profile.default, NetworkAction::Deny);
+}
+
+#[test]
 fn test_build_base_ruleset_succeeds() {
+    // Reads the ambient policy config (fail-open default); the ruleset must
+    // always build regardless of the persisted mode.
     let result = build_base_ruleset();
     assert!(result.is_ok());
-    let rs = result.expect("ruleset should build");
-    assert_eq!(rs.default_action, NetworkAction::Log);
 }

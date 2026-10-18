@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing)]
+
 use super::*;
 use std::os::unix::fs::PermissionsExt;
 
@@ -100,59 +102,6 @@ fn test_scan_deduplicates() {
     let results =
         scan_directories(&[tmp.path().to_path_buf(), tmp.path().to_path_buf()]).expect("scan");
     assert_eq!(results.len(), 1);
-}
-
-// ---------------------------------------------------------------------------
-// Mach-O detection tests
-// ---------------------------------------------------------------------------
-
-#[test]
-fn test_is_macho_64() {
-    let tmp = tempfile::TempDir::new().expect("tempdir");
-    let path = tmp.path().join("macho64");
-    // MH_MAGIC_64 + padding
-    std::fs::write(&path, b"\xfe\xed\xfa\xcfpadding").expect("write");
-    assert!(is_macho(&path));
-}
-
-#[test]
-fn test_is_macho_32() {
-    let tmp = tempfile::TempDir::new().expect("tempdir");
-    let path = tmp.path().join("macho32");
-    std::fs::write(&path, b"\xfe\xed\xfa\xcepadding").expect("write");
-    assert!(is_macho(&path));
-}
-
-#[test]
-fn test_is_macho_fat() {
-    let tmp = tempfile::TempDir::new().expect("tempdir");
-    let path = tmp.path().join("fat");
-    std::fs::write(&path, b"\xca\xfe\xba\xbepadding").expect("write");
-    assert!(is_macho(&path));
-}
-
-#[test]
-fn test_is_not_macho() {
-    let tmp = tempfile::TempDir::new().expect("tempdir");
-    let path = tmp.path().join("text");
-    std::fs::write(&path, b"#!/bin/sh\necho hello").expect("write");
-    assert!(!is_macho(&path));
-}
-
-#[test]
-fn test_is_macho_empty_file() {
-    let tmp = tempfile::TempDir::new().expect("tempdir");
-    let path = tmp.path().join("empty");
-    std::fs::write(&path, b"").expect("write");
-    assert!(!is_macho(&path));
-}
-
-#[test]
-fn test_is_macho_too_short() {
-    let tmp = tempfile::TempDir::new().expect("tempdir");
-    let path = tmp.path().join("short");
-    std::fs::write(&path, b"\xfe\xed").expect("write");
-    assert!(!is_macho(&path));
 }
 
 // ---------------------------------------------------------------------------

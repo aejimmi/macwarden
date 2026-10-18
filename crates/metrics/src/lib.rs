@@ -7,7 +7,7 @@
 //! # Modules
 //!
 //! - [`error`] -- Error types for metrics operations
-//! - [`event`] -- `MetricEvent` enum with six variants
+//! - [`event`] -- `MetricEvent` enum with nine variants
 //! - [`store`] -- `MetricsStore` unified read/write handle
 
 pub mod error;
@@ -17,4 +17,7 @@ pub mod store;
 // Re-export key types at crate root for convenience.
 pub use error::MetricsError;
 pub use event::MetricEvent;
-pub use store::{AppCount, AppStats, DomainCount, MetricsStore, SensorEvent, Summary, TimeRange};
+pub use store::{
+    AppBandwidth, AppCount, AppStats, BanEventRow, DomainCount, MetricsStore, SensorEvent, Summary,
+    TimeRange,
+};

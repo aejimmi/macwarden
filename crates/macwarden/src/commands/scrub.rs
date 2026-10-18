@@ -7,6 +7,7 @@ use super::enforce;
 use super::scrub_fs::{
     compute_size, delete_path, format_size, verify_path_safety, warn_running_processes,
 };
+use super::textfmt::pluralize;
 use crate::cli;
 use anyhow::Result;
 use catalog::{load_builtin_artifacts, load_builtin_groups};
@@ -220,11 +221,13 @@ fn run_list_summary() {
     cleanup_groups.sort_by_key(|g| &g.name);
 
     for g in &cleanup_groups {
+        // `Safety`'s Display ignores fmt width flags, so pad a String instead.
+        let safety = g.safety.to_string();
         println!(
-            "  {:<20} {:<14} {} commands",
+            "  {:<20} {:<14} {}",
             g.name,
-            g.safety,
-            g.cleanup_commands.len()
+            safety,
+            pluralize(g.cleanup_commands.len(), "command", "commands"),
         );
     }
 
@@ -238,11 +241,13 @@ fn run_list_summary() {
     for d in &sorted_domains {
         let has_group = find_group(&d.name, &groups).is_some();
         let suffix = if has_group { " [+services]" } else { "" };
+        // `Safety`'s Display ignores fmt width flags, so pad a String instead.
+        let safety = d.safety.to_string();
         println!(
-            "  {:<20} {:<14} {} artifacts{}",
+            "  {:<20} {:<14} {}{}",
             d.name,
-            d.safety,
-            d.artifacts.len(),
+            safety,
+            pluralize(d.artifacts.len(), "artifact", "artifacts"),
             suffix
         );
         total_artifacts += d.artifacts.len();

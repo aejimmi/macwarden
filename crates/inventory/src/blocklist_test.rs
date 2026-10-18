@@ -61,6 +61,6 @@ fn test_merge() {
 fn test_builtin_loads_without_panic() {
     // Just verify the embedded file parses without error.
     let bl = HashBlocklist::load();
-    // The seed file has no hashes, just comments.
-    assert!(bl.is_empty() || bl.len() > 0);
+    // The seed file has no hashes, just comments, so it loads empty.
+    assert!(bl.is_empty());
 }

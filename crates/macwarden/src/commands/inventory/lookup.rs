@@ -9,9 +9,22 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result};
 use inventory::InventoryStore;
+use openbinary_agent_core::{JobStatus, OpenBinaryClient, UploadResult};
 
 use crate::cli::OutputFormat;
-use crate::openbinary::{self, JobStatus, UploadResult};
+use crate::openbinary;
+
+/// Outcome of processing one binary through openbinary.
+enum Outcome {
+    /// Analysis is available. `uploaded` is true when this run uploaded the
+    /// binary (it was not already in the openbinary database).
+    Analyzed {
+        analysis: serde_json::Value,
+        uploaded: bool,
+    },
+    /// Unknown to openbinary and not uploaded (upload disabled or missing file).
+    NotFound,
+}
 
 /// Delay between openbinary API calls (milliseconds).
 const REQUEST_DELAY_MS: u64 = 100;
@@ -33,10 +46,10 @@ pub fn run(no_upload: bool, format: OutputFormat) -> Result<()> {
         .filter(|r| seen_hashes.insert(r.sha256.clone()))
         .collect();
 
-    let base = openbinary::endpoint();
+    let client = openbinary::client();
     let total = unique.len();
     let mut found = 0u64;
-    let uploaded = 0u64;
+    let mut uploaded = 0u64;
     let mut not_found = 0u64;
     let mut errors = 0u64;
 
@@ -50,9 +63,15 @@ pub fn run(no_upload: bool, format: OutputFormat) -> Result<()> {
         eprint!("\r  [{}/{}] {}...", i + 1, total, rec.display_name());
         let _ = stderr().flush();
 
-        match process_one(&base, &rec.sha256, &rec.path, no_upload) {
-            Ok(Some(analysis)) => {
+        match process_one(&client, &rec.sha256, &rec.path, no_upload) {
+            Ok(Outcome::Analyzed {
+                analysis,
+                uploaded: up,
+            }) => {
                 found += 1;
+                if up {
+                    uploaded += 1;
+                }
                 let now = epoch_ms();
                 // Update all records sharing this sha256.
                 for r in &unanalyzed {
@@ -63,7 +82,7 @@ pub fn run(no_upload: bool, format: OutputFormat) -> Result<()> {
                     }
                 }
             }
-            Ok(None) => {
+            Ok(Outcome::NotFound) => {
                 not_found += 1;
             }
             Err(e) => {
@@ -83,7 +102,9 @@ pub fn run(no_upload: bool, format: OutputFormat) -> Result<()> {
 
     match format {
         OutputFormat::Table => print_summary(total as u64, found, uploaded, not_found, errors),
-        OutputFormat::Json => print_summary_json(total as u64, found, uploaded, not_found, errors)?,
+        OutputFormat::Json => {
+            print_summary_json(total as u64, found, uploaded, not_found, errors)?;
+        }
     }
 
     Ok(())
@@ -91,51 +112,70 @@ pub fn run(no_upload: bool, format: OutputFormat) -> Result<()> {
 
 /// Process a single binary through openbinary.
 ///
-/// Returns `Ok(Some(analysis))` if found or successfully uploaded and analyzed,
-/// `Ok(None)` if not found and upload is disabled, or `Err` on API failure.
+/// Returns [`Outcome::Analyzed`] if found or successfully uploaded and analyzed
+/// (with `uploaded` reflecting whether this run uploaded it),
+/// [`Outcome::NotFound`] if unknown and upload is disabled, or `Err` on API
+/// failure.
 fn process_one(
-    base: &str,
+    client: &OpenBinaryClient,
     sha256: &str,
     path: &str,
     no_upload: bool,
-) -> Result<Option<serde_json::Value>> {
+) -> Result<Outcome> {
     // Check if openbinary already knows this hash.
-    if let Some(analysis) = openbinary::get_binary(base, sha256)? {
-        return Ok(Some(analysis));
+    if let Some(analysis) = client.get_analysis(sha256)? {
+        return Ok(Outcome::Analyzed {
+            analysis: analysis.into_raw(),
+            uploaded: false,
+        });
     }
 
     if no_upload {
-        return Ok(None);
+        return Ok(Outcome::NotFound);
     }
 
     // Upload for analysis (same flow as `macwarden lookup`).
     let file_path = std::path::Path::new(path);
     if !file_path.is_file() {
-        return Ok(None);
+        return Ok(Outcome::NotFound);
     }
 
-    let job_id = match openbinary::upload(base, file_path)? {
+    let job_id = match client.upload(file_path)? {
         UploadResult::AlreadyDone { sha256: ref s, .. } => {
-            return openbinary::get_binary(base, s);
+            return fetch_uploaded(client, s);
         }
         UploadResult::Pending { job_id } => job_id,
     };
 
     // Poll until done.
-    let status = openbinary::poll_job(base, &job_id, &mut |_| {})?;
+    let status = client.poll_job(&job_id, &mut |_| {})?;
     if let JobStatus::Failed(e) = status {
         anyhow::bail!("analysis failed: {e}");
     }
 
-    openbinary::get_binary(base, sha256)
+    fetch_uploaded(client, sha256)
+}
+
+/// Fetch the analysis for a binary that was just uploaded this run.
+fn fetch_uploaded(client: &OpenBinaryClient, sha256: &str) -> Result<Outcome> {
+    match client.get_analysis(sha256)? {
+        Some(analysis) => Ok(Outcome::Analyzed {
+            analysis: analysis.into_raw(),
+            uploaded: true,
+        }),
+        None => Ok(Outcome::NotFound),
+    }
 }
 
 /// Print a human-readable summary.
-fn print_summary(total: u64, found: u64, _uploaded: u64, not_found: u64, errors: u64) {
+fn print_summary(total: u64, found: u64, uploaded: u64, not_found: u64, errors: u64) {
     println!();
     println!("  Inventory lookup complete");
     println!("    Total:     {total}");
     println!("    Analyzed:  {found}");
+    if uploaded > 0 {
+        println!("    Uploaded:  {uploaded}");
+    }
     println!("    Unknown:   {not_found}");
     if errors > 0 {
         println!("    Errors:    {errors}");
@@ -150,13 +190,14 @@ fn print_summary(total: u64, found: u64, _uploaded: u64, not_found: u64, errors:
 fn print_summary_json(
     total: u64,
     found: u64,
-    _uploaded: u64,
+    uploaded: u64,
     not_found: u64,
     errors: u64,
 ) -> Result<()> {
     let json = serde_json::json!({
         "total": total,
         "analyzed": found,
+        "uploaded": uploaded,
         "unknown": not_found,
         "errors": errors,
     });

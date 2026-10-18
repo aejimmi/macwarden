@@ -1,0 +1,25 @@
+[package]
+name = "enforce-ne-ffi"
+description = "C-ABI decision core linked by the macwarden NetworkExtension content-filter system extension"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+# `staticlib` is what the Swift `NEFilterDataProvider` sysext links against.
+# `rlib` lets Rust integration tests call the C-ABI functions directly.
+crate-type = ["staticlib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+net = { workspace = true }
+banwatch = { workspace = true }
+arc-swap = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

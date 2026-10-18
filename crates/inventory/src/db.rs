@@ -125,6 +125,12 @@ impl InventoryStore {
         state.records.values().cloned().collect()
     }
 
+    /// Look up a single record by its executable path (keyed, O(1)-ish) — avoids
+    /// cloning the whole store when only one binary's analysis is needed.
+    pub fn get(&self, path: &str) -> Option<BinaryRecord> {
+        self.inner.read().records.get(path).cloned()
+    }
+
     /// Return records that have not been analyzed by openbinary yet.
     pub fn unanalyzed(&self) -> Vec<BinaryRecord> {
         let state = self.inner.read();

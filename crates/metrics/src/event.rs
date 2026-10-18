@@ -78,6 +78,47 @@ pub enum MetricEvent {
         tracker_category: Option<String>,
     },
 
+    /// Per-app bandwidth sample: bytes transferred since the last sample.
+    ///
+    /// Recorded by the daemon on a periodic interval (~60 s) so that Hour/Today
+    /// history byte totals persist across daemon restarts.
+    #[serde(rename = "bandwidth_sampled")]
+    BandwidthSampled {
+        /// Code signing identity of the app the bytes are attributed to.
+        app_id: String,
+        /// Bytes received since the previous sample.
+        down_bytes: u64,
+        /// Bytes sent since the previous sample.
+        up_bytes: u64,
+    },
+
+    /// A source IP was banned by the banwatch scanner-protection engine.
+    #[serde(rename = "ip_banned")]
+    IpBanned {
+        /// The banned source IP.
+        ip: String,
+        /// The detector that triggered the ban (`repeat-blocked`,
+        /// `auth-failure`, `port-scan`, or `manual`).
+        detector: String,
+        /// Ban duration in seconds; `None` for a permanent ban.
+        #[serde(default)]
+        ban_secs: Option<u64>,
+        /// Prior escalation count at ban time (0 = first offense).
+        #[serde(default)]
+        escalation_count: u32,
+        /// Trigger source: a detector id, or `manual`.
+        source: String,
+    },
+
+    /// A source IP's ban was lifted (expiry or manual unban).
+    #[serde(rename = "ip_unbanned")]
+    IpUnbanned {
+        /// The unbanned source IP.
+        ip: String,
+        /// The detector whose ban was lifted.
+        detector: String,
+    },
+
     /// Periodic Endpoint Security statistics flush.
     #[serde(rename = "es_stats")]
     EsStats {
@@ -103,17 +144,21 @@ impl MetricEvent {
             Self::SweepCompleted { .. } => "sweep_completed",
             Self::SensorTriggered { .. } => "sensor_triggered",
             Self::ConnectionDecided { .. } => "connection_decided",
+            Self::BandwidthSampled { .. } => "bandwidth_sampled",
+            Self::IpBanned { .. } => "ip_banned",
+            Self::IpUnbanned { .. } => "ip_unbanned",
             Self::EsStats { .. } => "es_stats",
         }
     }
 
     /// Returns the app identity, if this event is attributable to a specific app.
     ///
-    /// Populated for `ConnectionDecided` (from `app_id`) and `SensorTriggered`
-    /// (from `code_id`).
+    /// Populated for `ConnectionDecided` (from `app_id`), `BandwidthSampled`
+    /// (from `app_id`), and `SensorTriggered` (from `code_id`).
     pub fn app_id(&self) -> Option<&str> {
         match self {
             Self::ConnectionDecided { app_id, .. } => app_id.as_deref(),
+            Self::BandwidthSampled { app_id, .. } => Some(app_id.as_str()),
             Self::SensorTriggered { code_id, .. } => code_id.as_deref(),
             _ => None,
         }

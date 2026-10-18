@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DEV entitlements for the content-filter system extension.
+
+  com.apple.developer.networking.networkextension = [content-filter-provider]
+  is the entitlement a NEFilterDataProvider needs. In a shipping build this value
+  must be BACKED by an Apple-granted provisioning profile (the developer account
+  must have the Network Extensions capability with content-filter-provider). In
+  DEV, `systemextensionsctl developer on` (SIP disabled) accepts an ad-hoc-signed
+  extension carrying this entitlement without Apple provisioning.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.developer.networking.networkextension</key>
+    <array>
+        <string>content-filter-provider</string>
+    </array>
+</dict>
+</plist>

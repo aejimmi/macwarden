@@ -146,14 +146,14 @@ fn test_etchdb_store_open_and_flush() {
         Duration::from_secs(300),
     );
 
-    let store = DnsCacheStore::open(store_dir.clone(), cache).expect("open");
+    let store = DnsCacheStore::open(&store_dir, cache).expect("open");
     let flushed = store.flush().expect("flush");
     assert_eq!(flushed, 2);
     drop(store);
 
     // Reopen and verify entries were persisted.
     let cache2 = DnsCache::new(100);
-    let store2 = DnsCacheStore::open(store_dir, cache2).expect("reopen");
+    let store2 = DnsCacheStore::open(&store_dir, cache2).expect("reopen");
     assert_eq!(
         store2.cache().lookup(&"1.1.1.1".parse().unwrap()),
         Some("one.one.one.one".to_owned())
@@ -170,7 +170,7 @@ fn test_etchdb_store_empty_cache() {
     let store_dir = dir.path().join("dns-store-empty");
 
     let cache = DnsCache::new(100);
-    let store = DnsCacheStore::open(store_dir, cache).expect("open");
+    let store = DnsCacheStore::open(&store_dir, cache).expect("open");
     let flushed = store.flush().expect("flush");
     assert_eq!(flushed, 0);
     assert!(store.cache().is_empty());
@@ -189,7 +189,7 @@ fn test_etchdb_store_survives_reopen() {
             "www.google.com".to_owned(),
             Duration::from_secs(7200),
         );
-        let store = DnsCacheStore::open(store_dir.clone(), cache).expect("open");
+        let store = DnsCacheStore::open(&store_dir, cache).expect("open");
         store.flush().expect("flush");
         // Drop triggers another flush + stop.
     }
@@ -197,7 +197,7 @@ fn test_etchdb_store_survives_reopen() {
     // Second session: entries should be loaded.
     {
         let cache = DnsCache::new(100);
-        let store = DnsCacheStore::open(store_dir, cache).expect("reopen");
+        let store = DnsCacheStore::open(&store_dir, cache).expect("reopen");
         assert_eq!(
             store.cache().lookup(&"142.250.80.46".parse().unwrap()),
             Some("www.google.com".to_owned())

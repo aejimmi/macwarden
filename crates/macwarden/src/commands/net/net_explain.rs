@@ -80,6 +80,7 @@ pub(super) fn build_process_identity(input: &str) -> ProcessIdentity {
         code_id,
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     }
 }
 

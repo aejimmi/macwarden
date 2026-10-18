@@ -107,6 +107,10 @@ pub fn run(profile_override: Option<&str>) -> Result<()> {
     // Start hardware sensor monitoring.
     let _sensor_guards = start_sensors(tx.clone());
 
+    // Start the daemon IPC server alongside the enforcement loop (Phase 10).
+    // Best-effort: a socket bind failure logs but does not stop monitoring.
+    let _ipc_server = crate::daemon::ipc_server::spawn(Arc::clone(&shutdown));
+
     println!("Watching for drift (Ctrl+C to stop)...\n");
 
     let mut debounce: HashMap<String, Instant> = HashMap::new();

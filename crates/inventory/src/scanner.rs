@@ -38,12 +38,6 @@ pub const ALL_DIRS: &[&str] = &[
     "/opt/homebrew/bin",
 ];
 
-/// Mach-O magic bytes for executable detection.
-const MACHO_MAGIC_32: [u8; 4] = [0xfe, 0xed, 0xfa, 0xce]; // MH_MAGIC
-const MACHO_MAGIC_64: [u8; 4] = [0xfe, 0xed, 0xfa, 0xcf]; // MH_MAGIC_64
-const MACHO_FAT: [u8; 4] = [0xca, 0xfe, 0xba, 0xbe]; // FAT_MAGIC
-const MACHO_FAT_64: [u8; 4] = [0xca, 0xfe, 0xba, 0xbf]; // FAT_MAGIC_64
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -279,27 +273,6 @@ fn is_executable_file(path: &Path) -> bool {
     {
         true
     }
-}
-
-/// Check if a file starts with Mach-O magic bytes.
-///
-/// Reads the first 4 bytes only — fast even for large files.
-pub fn is_macho(path: &Path) -> bool {
-    use std::io::Read;
-
-    let Ok(mut f) = std::fs::File::open(path) else {
-        return false;
-    };
-
-    let mut magic = [0u8; 4];
-    if f.read_exact(&mut magic).is_err() {
-        return false;
-    }
-
-    magic == MACHO_MAGIC_32
-        || magic == MACHO_MAGIC_64
-        || magic == MACHO_FAT
-        || magic == MACHO_FAT_64
 }
 
 #[cfg(test)]

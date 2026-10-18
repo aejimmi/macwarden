@@ -13,6 +13,7 @@ workspace = true
 appdb = { workspace = true }
 globset = { workspace = true }
 ipnet = { workspace = true }
+libc = { workspace = true }
 maxminddb = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -21,4 +22,10 @@ toml = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+criterion = { workspace = true }
 tempfile = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[[bench]]
+name = "matcher"
+harness = false

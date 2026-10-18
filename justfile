@@ -42,3 +42,23 @@ bench-crate crate:
 
 # Run all checks (lint, fmt, test, deny)
 check-all: lint fmt test deny
+
+# --- Run / package ---------------------------------------------------------
+
+# One-command dev launch: build the single `macwarden` binary (debug) and open
+# the panel. Running it with no args opens the panel, which auto-starts the
+# daemon (see crates/macwarden-ui ui::ensure) — no separate `serve` terminal.
+run:
+    cargo build -p macwarden
+    ./target/debug/macwarden
+
+# Run only the daemon in the foreground (debug) — for when you want its logs.
+dev-daemon:
+    cargo run -p macwarden -- serve
+
+# Assemble a double-clickable macwarden.app bundle (release, UNSIGNED dev build).
+# Bundles the `macwarden` binary + Info.plist under target/macwarden.app. First launch
+# needs a right-click -> Open (Gatekeeper); a signed/notarized build with an
+# SMAppService privileged daemon is the real distribution path (later).
+app:
+    ./scripts/bundle-app.sh

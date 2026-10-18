@@ -97,6 +97,21 @@ pub struct SensorEvent {
     pub code_id: Option<String>,
 }
 
+/// A banwatch ban/unban lifecycle event, for the panel ban log (spec 010 R9).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct BanEventRow {
+    /// Unix epoch milliseconds.
+    pub ts: i64,
+    /// Event kind: `"ip_banned"` or `"ip_unbanned"`.
+    pub kind: String,
+    /// The source IP.
+    pub ip: String,
+    /// The detector that produced the event.
+    pub detector: String,
+    /// Trigger source (a detector id or `manual`); `None` for unban rows.
+    pub source: Option<String>,
+}
+
 // ---------------------------------------------------------------------------
 // Time range
 // ---------------------------------------------------------------------------
@@ -169,6 +184,7 @@ impl MetricsStore {
                 path: parent.display().to_string(),
                 source: e,
             })?;
+            secure_dir(parent);
         }
 
         let conn = Connection::open(path).map_err(|e| MetricsError::Open {
@@ -182,6 +198,10 @@ impl MetricsStore {
 
         init_schema(&conn)?;
         set_permissions(path);
+        // WAL mode was enabled above, so `-wal` and `-shm` sidecars now exist and
+        // carry the same event data — chmod them too, not just the main db.
+        set_permissions(&wal_sidecar(path, "-wal"));
+        set_permissions(&wal_sidecar(path, "-shm"));
 
         let store = Self { conn };
         store.auto_prune()?;
@@ -576,6 +596,46 @@ impl MetricsStore {
 
         collect_rows(rows, "sensor_timeline")
     }
+
+    /// Returns banwatch ban/unban events in `range`, newest first (spec 010 R9).
+    ///
+    /// Powers the panel's ban log. Both `ip_banned` and `ip_unbanned` rows are
+    /// returned interleaved by time; `source` is `NULL` for unban rows.
+    pub fn ban_timeline(&self, range: &TimeRange) -> Result<Vec<BanEventRow>> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT ts, kind, \
+                        json_extract(payload, '$.ip') as ip, \
+                        json_extract(payload, '$.detector') as detector, \
+                        json_extract(payload, '$.source') as source \
+                 FROM events \
+                 WHERE kind IN ('ip_banned', 'ip_unbanned') \
+                 AND ts >= ?1 AND ts < ?2 \
+                 ORDER BY ts DESC",
+            )
+            .map_err(|e| MetricsError::Query {
+                operation: "ban_timeline".into(),
+                source: e,
+            })?;
+
+        let rows = stmt
+            .query_map(params![range.start, range.end], |row| {
+                Ok(BanEventRow {
+                    ts: row.get(0)?,
+                    kind: row.get(1)?,
+                    ip: row.get::<_, Option<String>>(2)?.unwrap_or_default(),
+                    detector: row.get::<_, Option<String>>(3)?.unwrap_or_default(),
+                    source: row.get(4)?,
+                })
+            })
+            .map_err(|e| MetricsError::Query {
+                operation: "ban_timeline".into(),
+                source: e,
+            })?;
+
+        collect_rows(rows, "ban_timeline")
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -617,11 +677,15 @@ fn init_schema(conn: &Connection) -> Result<()> {
     .map_err(MetricsError::Schema)
 }
 
-/// Best-effort chmod 0600 on Unix. Silently ignored on other platforms.
+/// Best-effort chmod 0600 on Unix. Silently ignored on other platforms, and on
+/// a path that does not exist (a sidecar SQLite has not created yet).
 fn set_permissions(path: &Path) {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
+        if !path.exists() {
+            return;
+        }
         if let Err(e) = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600)) {
             warn!(path = %path.display(), error = %e, "failed to set 0600 permissions");
         }
@@ -632,6 +696,29 @@ fn set_permissions(path: &Path) {
     }
 }
 
+/// Best-effort chmod 0700 on a directory (Unix only). Keeps the metrics dir —
+/// which holds browsing/enforcement history — owner-only.
+fn secure_dir(dir: &Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Err(e) = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700)) {
+            warn!(path = %dir.display(), error = %e, "failed to set 0700 on metrics dir");
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = dir;
+    }
+}
+
+/// The path of a SQLite WAL sidecar (`-wal` / `-shm`) beside the main db file.
+fn wal_sidecar(path: &Path, suffix: &str) -> std::path::PathBuf {
+    let mut os = path.as_os_str().to_owned();
+    os.push(suffix);
+    std::path::PathBuf::from(os)
+}
+
 /// Current time as Unix epoch milliseconds.
 fn now_epoch_ms() -> i64 {
     SystemTime::now()
@@ -639,6 +726,10 @@ fn now_epoch_ms() -> i64 {
         .unwrap_or_default()
         .as_millis() as i64
 }
+
+#[path = "bandwidth.rs"]
+mod bandwidth;
+pub use bandwidth::AppBandwidth;
 
 #[cfg(test)]
 #[path = "store_test.rs"]

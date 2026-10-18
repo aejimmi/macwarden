@@ -21,6 +21,7 @@ fn make_process(code_id: &str) -> ProcessIdentity {
         code_id: Some(code_id.to_owned()),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     }
 }
 
@@ -494,6 +495,7 @@ fn test_profile_process_team_id_syntax() {
         code_id: Some("com.google.Chrome".to_owned()),
         team_id: Some("EQHXZ8M8AV".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     let other_proc = ProcessIdentity {
         pid: 100,
@@ -502,6 +504,7 @@ fn test_profile_process_team_id_syntax() {
         code_id: Some("com.other.App".to_owned()),
         team_id: Some("DIFFERENT01".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     let dest = make_dest("example.com");
 

@@ -128,6 +128,10 @@ fn run_download(key: Option<&str>) -> Result<()> {
 
     let dir = net::geo_dir().map_err(|e| anyhow::anyhow!("HOME not set: {e}"))?;
     fs::create_dir_all(&dir).context("failed to create geo directory")?;
+    // Keep the `~/.macwarden/` base owner-only when the CLI is the first to create it.
+    if let Some(base) = dir.parent() {
+        net::secure_dir(base);
+    }
 
     println!("Downloading GeoIP databases to {}", dir.display());
     println!();

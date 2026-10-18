@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Info.plist template for the macwarden content-filter system extension.
+
+  build.sh substitutes:
+    @@SHARED_DIR@@   -> the console user's ~/.macwarden (the ruleset location)
+    @@VERSION@@      -> the build version string
+
+  The key entry is NetworkExtension > NEProviderClasses: it maps the
+  content-filter data provider point to our Swift class. The @objc(FilterDataProvider)
+  name means the class is resolvable without a module prefix.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>macwarden Network Filter</string>
+    <key>CFBundleExecutable</key>
+    <string>ai.macwarden.filter.extension</string>
+    <key>CFBundleIdentifier</key>
+    <string>ai.macwarden.filter.extension</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>macwarden Network Filter</string>
+    <key>CFBundlePackageType</key>
+    <string>SYSX</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@@VERSION@@</string>
+    <key>CFBundleVersion</key>
+    <string>@@VERSION@@</string>
+    <key>NSSystemExtensionUsageDescription</key>
+    <string>macwarden filters outbound network connections per application.</string>
+
+    <!-- The ruleset location the provider reads (root sysext lacks the user's $HOME). -->
+    <key>MacwardenSharedDir</key>
+    <string>@@SHARED_DIR@@</string>
+
+    <key>NetworkExtension</key>
+    <dict>
+        <key>NEMachServiceName</key>
+        <string>ai.macwarden.filter.extension</string>
+        <key>NEProviderClasses</key>
+        <dict>
+            <key>com.apple.networkextension.filter-data</key>
+            <string>FilterDataProvider</string>
+        </dict>
+    </dict>
+</dict>
+</plist>

@@ -9,6 +9,9 @@ fn test_is_critical_exact_match() {
     assert!(is_critical("com.apple.notifyd"));
     assert!(is_critical("com.apple.distnoted"));
     assert!(is_critical("com.apple.fseventsd"));
+    // mDNSResponder resolves all DNS; killing it breaks networking, so the
+    // enforcement safelist must block it (not just the display annotation).
+    assert!(is_critical("com.apple.mDNSResponder"));
     assert!(is_critical("com.apple.SystemStarter"));
     assert!(is_critical("com.apple.kernelmanagerd"));
     assert!(is_critical("com.apple.coreservicesd"));

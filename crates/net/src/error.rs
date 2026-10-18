@@ -113,6 +113,13 @@ pub enum NetError {
         /// What went wrong.
         message: String,
     },
+
+    /// The persisted policy config could not be serialized or written.
+    #[error("policy config io error: {message}")]
+    PolicyIo {
+        /// What went wrong.
+        message: String,
+    },
 }
 
 /// Convenience alias for results using [`NetError`].

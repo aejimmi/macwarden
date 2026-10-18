@@ -1,0 +1,59 @@
+[package]
+name = "macwarden-ui"
+description = "GPUI desktop panel for macwarden — live per-app traffic, firewall verdicts, rule editing, and packet traces"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "macwarden_ui"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+tracing = { workspace = true }
+ipc = { workspace = true }
+netsample = { workspace = true }
+openbinary-agent-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+gpui = "0.2.2"
+sysinfo = { workspace = true }
+procmon = { workspace = true }
+image = "0.25"
+smallvec = "1"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = [
+    "std",
+    "NSString",
+    "NSGeometry",
+    "objc2-core-foundation",
+] }
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+    "std",
+    "objc2-core-foundation",
+    "NSWorkspace",
+    "NSImage",
+    "NSImageRep",
+    "NSBitmapImageRep",
+    "NSGraphicsContext",
+    "NSGraphics",
+    "NSApplication",
+    "NSStatusBar",
+    "NSStatusItem",
+    "NSStatusBarButton",
+    "NSButton",
+    "NSControl",
+    "NSResponder",
+    "NSView",
+] }
+
+[lints]
+workspace = true

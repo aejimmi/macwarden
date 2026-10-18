@@ -86,7 +86,11 @@ pub(super) fn resolve_bare_ips(entries: &mut [ScanEntry], tracker_db: &TrackerDa
 /// - Results that are just the IP address echoed back
 /// - Results with no dots (bare hostnames like "localhost")
 /// - Results that look like auto-generated rDNS (contain the IP octets)
-fn reverse_lookup(ip: IpAddr) -> Option<String> {
+///
+/// Shared with the daemon's background rDNS cache ([`crate::daemon`]) so both
+/// the CLI and the live snapshot apply identical garbage-PTR filtering.
+#[must_use]
+pub(crate) fn reverse_lookup(ip: IpAddr) -> Option<String> {
     let name = dns_lookup::lookup_addr(&ip).ok()?;
 
     // Skip if the result is just the IP printed back.

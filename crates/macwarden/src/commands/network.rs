@@ -15,6 +15,7 @@ use launchd::{MacOsPlatform, Platform};
 use policy::{ServiceGroup, find_groups_for_service};
 
 use crate::cli::OutputFormat;
+use crate::commands::textfmt::pluralize;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -339,14 +340,17 @@ fn print_table(entries: &[&NetEntry]) {
     let tracker_count = entries.iter().filter(|e| e.tracker.is_some()).count();
     let services = entries.iter().filter(|e| e.service.is_some()).count();
     print!(
-        "\n{} connections ({} in known groups, {} from services, {} other)",
-        entries.len(),
+        "\n{} ({} in known groups, {} from services, {} other)",
+        pluralize(entries.len(), "connection", "connections"),
         grouped,
         services - grouped,
         entries.len() - services,
     );
     if tracker_count > 0 {
-        print!(" -- {tracker_count} tracker connections detected");
+        print!(
+            " -- {} detected",
+            pluralize(tracker_count, "tracker connection", "tracker connections"),
+        );
     }
     println!();
 }

@@ -6,22 +6,21 @@
 use std::io::{Write, stderr};
 
 use anyhow::{Context, Result, bail};
+use openbinary_agent_core::{Analysis, JobStatus, UploadResult};
 
 use crate::cli::OutputFormat;
-use crate::openbinary::{
-    self, AnalysisJson, JobStatus, UploadResult, extract_capabilities, extract_string_list,
-};
+use crate::openbinary;
 
 /// Test endpoint connectivity (no path given).
 pub fn ping() -> Result<()> {
     let base = openbinary::endpoint();
-    let source = if base == "https://openbinary.org/api/v1" {
+    let source = if base == openbinary::DEFAULT_ENDPOINT {
         "default"
     } else {
         "config"
     };
     println!("  Endpoint:  {base}  ({source})");
-    match openbinary::ping(&base) {
+    match openbinary::client().ping() {
         Ok(dur) => println!("  Status:    reachable ({dur:.0?})"),
         Err(e) => bail!("unreachable: {e}"),
     }
@@ -38,15 +37,15 @@ pub fn run(path: &str, no_upload: bool, format: OutputFormat) -> Result<()> {
         bail!("not a file: {}", path.display());
     }
 
-    let base = openbinary::endpoint();
+    let client = openbinary::client();
 
     // 1. Hash locally.
     eprint!("  Hashing... ");
-    let sha256 = openbinary::hash_file(&path)?;
+    let sha256 = openbinary_agent_core::hash::hash_file(&path)?;
     eprintln!("{}", &sha256[..16]);
 
     // 2. Lookup by hash.
-    if let Some(analysis) = openbinary::get_binary(&base, &sha256)? {
+    if let Some(analysis) = client.get_analysis(&sha256)? {
         eprintln!("  \u{2713} Found on openbinary\n");
         display(&analysis, &sha256, format);
         return Ok(());
@@ -59,11 +58,12 @@ pub fn run(path: &str, no_upload: bool, format: OutputFormat) -> Result<()> {
     eprint!("  Not found. Uploading for analysis... ");
 
     // 3. Upload.
-    let job_id = match openbinary::upload(&base, &path)? {
+    let job_id = match client.upload(&path)? {
         UploadResult::AlreadyDone { sha256, name } => {
             eprintln!("already analyzed ({name}).");
-            let analysis =
-                openbinary::get_binary(&base, &sha256)?.context("binary vanished after upload")?;
+            let analysis = client
+                .get_analysis(&sha256)?
+                .context("binary vanished after upload")?;
             display(&analysis, &sha256, format);
             return Ok(());
         }
@@ -75,7 +75,7 @@ pub fn run(path: &str, no_upload: bool, format: OutputFormat) -> Result<()> {
 
     // 4. Poll for completion.
     eprint!("  Analyzing... ");
-    let status = openbinary::poll_job(&base, &job_id, &mut |s| match s {
+    let status = client.poll_job(&job_id, &mut |s| match s {
         JobStatus::Pending => eprint_flush("waiting... "),
         JobStatus::Running => eprint_flush("running... "),
         JobStatus::Done => eprintln!("done."),
@@ -88,8 +88,9 @@ pub fn run(path: &str, no_upload: bool, format: OutputFormat) -> Result<()> {
 
     // 5. Fetch results.
     eprintln!();
-    let analysis =
-        openbinary::get_binary(&base, &sha256)?.context("analysis missing after completion")?;
+    let analysis = client
+        .get_analysis(&sha256)?
+        .context("analysis missing after completion")?;
     display(&analysis, &sha256, format);
 
     Ok(())
@@ -99,29 +100,27 @@ pub fn run(path: &str, no_upload: bool, format: OutputFormat) -> Result<()> {
 // Display
 // ---------------------------------------------------------------------------
 
-fn display(analysis: &AnalysisJson, sha256: &str, format: OutputFormat) {
+fn display(analysis: &Analysis, sha256: &str, format: OutputFormat) {
     match format {
         OutputFormat::Table => print_table(analysis, sha256),
         OutputFormat::Json => print_json(analysis),
     }
 }
 
-fn print_table(a: &AnalysisJson, sha256: &str) {
-    let name = a
-        .pointer("/fingerprint/name")
-        .and_then(|v| v.as_str())
-        .unwrap_or("unknown");
+fn print_table(a: &Analysis, sha256: &str) {
+    let name = a.name().unwrap_or("unknown");
 
-    let capabilities = extract_capabilities(a);
-    let frameworks = extract_string_list(a, &["dna", "sets", "frameworks"]);
-    let entitlements = extract_string_list(a, &["dna", "sets", "entitlements"]);
+    let capabilities = a.capabilities();
+    let frameworks = a.frameworks();
+    let entitlements = a.entitlements();
 
     let endpoint = openbinary::endpoint();
     // Strip /api/v1 to get the base URL for the web link.
     let web_base = endpoint.strip_suffix("/api/v1").unwrap_or(&endpoint);
 
-    let title = a.get("title").and_then(|v| v.as_str()).unwrap_or("");
-    let summary = a.get("summary").and_then(|v| v.as_str()).unwrap_or("");
+    let raw = a.raw();
+    let title = raw.get("title").and_then(|v| v.as_str()).unwrap_or("");
+    let summary = raw.get("summary").and_then(|v| v.as_str()).unwrap_or("");
 
     println!("  {name}");
     if !title.is_empty() {
@@ -163,9 +162,9 @@ fn print_table(a: &AnalysisJson, sha256: &str) {
     println!("    {web_base}/binary/{sha256}");
 }
 
-fn print_json(a: &AnalysisJson) {
+fn print_json(a: &Analysis) {
     // serde_json::to_string_pretty won't fail on a valid Value.
-    if let Ok(json) = serde_json::to_string_pretty(a) {
+    if let Ok(json) = serde_json::to_string_pretty(a.raw()) {
         println!("{json}");
     }
 }

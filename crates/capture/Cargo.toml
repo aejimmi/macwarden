@@ -1,0 +1,31 @@
+[package]
+name = "capture"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# Live BPF/pcap capture (stage 2). Off by default so the crate stays pure and
+# Linux-CI-clean. Pulls the vendored pcap crate; all code it enables is
+# additionally `target_os = "macos"`-gated and needs root / `access_bpf` at
+# runtime (see the crate docs and `session.rs`).
+capture-live = ["dep:pcap", "dep:tracing"]
+
+[dependencies]
+etherparse.workspace = true
+tls-parser.workspace = true
+thiserror.workspace = true
+
+# Live-capture-only dep (feature-gated). `tracing` is portable so it stays here.
+tracing = { workspace = true, optional = true }
+
+# `pcap` (vendored, links system libpcap via its build.rs) is macOS-only: it is
+# target-gated so that enabling `capture-live` by default keeps non-macOS builds
+# (Linux CI) clean — the feature turns on, but the platform gate leaves `pcap`
+# out of the dependency graph, exactly like the `all(feature, macos)` use sites.
+[target.'cfg(target_os = "macos")'.dependencies]
+pcap = { path = "../../vendors/pcap", optional = true }

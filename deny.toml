@@ -13,7 +13,48 @@ targets = [
 ]
 
 [advisories]
-ignore = []
+# Every entry below is non-reachable in macwarden's runtime attack surface:
+# either a build-time proc-macro, a dev/test-only dependency, or a gpui UI-only
+# transitive with no patched version available. Runtime-reachable advisories are
+# NOT ignored here — they were fixed by dependency bumps (crossbeam-epoch 0.9.20,
+# rustls-webpki 0.103.15, plist 1.10 -> quick-xml 0.41, h2 0.4.20,
+# rustls 0.23.46).
+ignore = [
+    # --- vulnerabilities: fixed on the reachable path, remaining copy is not reachable ---
+    { id = "RUSTSEC-2026-0194", reason = "quick-xml quadratic-attr DoS: runtime plist path fixed via quick-xml 0.41; the only remaining <0.41 copy (0.39.4) is inside wayland-scanner, a build-time proc-macro that parses macwarden's own bundled Wayland protocol XML on Linux — not attacker input, not in the shipped binary" },
+    { id = "RUSTSEC-2026-0195", reason = "quick-xml NsReader namespace-alloc DoS: same as 0194 — runtime plist path fixed via quick-xml 0.41; remaining 0.39.4 is wayland-scanner build-time codegen over trusted bundled protocol XML, plist never uses NsReader" },
+    { id = "RUSTSEC-2021-0124", reason = "tokio 0.1.22 oneshot data race: dev-dependency only (pcap -> tun-tap -> tokio-core, test/dev target), not in the shipped binary; race requires concurrent close+send which tun-tap does not do" },
+
+    # --- unmaintained: dev/test-only via pcap -> tun-tap -> tokio 0.1 ecosystem ---
+    { id = "RUSTSEC-2020-0016", reason = "net2 deprecated: dev-only via pcap -> tun-tap -> mio 0.6; build/test target, not shipped, no safe upgrade (pinned by tun-tap 0.1)" },
+    { id = "RUSTSEC-2026-0050", reason = "tokio-uds unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0051", reason = "tokio-threadpool unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0052", reason = "tokio-sync unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0054", reason = "tokio-current-thread unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0056", reason = "tokio-codec unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0057", reason = "tokio-reactor unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0058", reason = "tokio-io unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0059", reason = "tokio-tcp unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0060", reason = "tokio-timer unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0061", reason = "tokio-fs unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0063", reason = "tokio-executor unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+    { id = "RUSTSEC-2026-0064", reason = "tokio-udp unmaintained: dev-only via pcap -> tun-tap -> tokio 0.1 ecosystem, no safe upgrade" },
+
+    # --- unmaintained: build-time proc-macros via gpui, no runtime code ---
+    { id = "RUSTSEC-2026-0173", reason = "proc-macro-error2 unmaintained: compile-time proc-macro via gpui -> stacksafe-macro; generates no runtime code, no fix available" },
+    { id = "RUSTSEC-2024-0436", reason = "paste unmaintained: build-time proc-macro via gpui (metal / rav1e); no runtime code, no safe upgrade (pinned by gpui deps)" },
+
+    # --- unmaintained: gpui UI-only transitives, no patched version available ---
+    { id = "RUSTSEC-2025-0052", reason = "async-std discontinued: transitive via gpui http client (zed-async-tar); UI-only, no safe upgrade until gpui migrates off it" },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile unmaintained (not a vuln): via gpui -> zed-reqwest; UI-only, no safe upgrade, functionally equivalent to rustls-pki-types PEM code" },
+    { id = "RUSTSEC-2026-0192", reason = "ttf-parser unmaintained: gpui font rendering only; parses local installed fonts for the UI, not attacker-supplied data, no safe upgrade" },
+    { id = "RUSTSEC-2026-0206", reason = "rustybuzz unmaintained: gpui text shaping only; UI-render path over local font/text, not attacker input, no safe upgrade" },
+
+    # --- unmaintained: Linux-only gpui transitives (oo7 secret-service / xdg portal), absent from macOS builds ---
+    { id = "RUSTSEC-2026-0370", reason = "zvariant unmaintained, no safe upgrade: Linux-only transitive of gpui -> oo7 (secret-service) -> zbus; macwarden ships macOS, this code is never linked into a macOS build" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names unmaintained, no safe upgrade: same Linux-only gpui -> oo7 -> zbus path; not in macOS builds" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive unmaintained, no safe upgrade: proc-macro of the same Linux-only gpui -> oo7 -> zbus path; not in macOS builds" },
+]
 
 [licenses]
 allow = [

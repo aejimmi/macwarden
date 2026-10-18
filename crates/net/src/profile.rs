@@ -228,7 +228,7 @@ impl TrackerSettings {
 // ---------------------------------------------------------------------------
 
 /// Which network groups to enable/disable (overriding defaults).
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GroupSettings {
     /// Groups to explicitly enable (overrides `default_enabled = false`).
     #[serde(default)]

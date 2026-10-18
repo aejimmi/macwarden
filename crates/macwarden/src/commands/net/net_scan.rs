@@ -7,12 +7,13 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
-use tracing::{debug, warn};
+use tracing::debug;
 
 use net::{AddressFamily, Destination, GeoLookup, NetworkAction, ProcessIdentity, TrackerDatabase};
 
 use super::net_lsof::{LsofConnection, collect_lsof_connections};
 use super::net_rdns::resolve_bare_ips;
+use crate::commands::textfmt::pluralize;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,7 +90,8 @@ pub(super) fn run(
     let geo = match GeoLookup::new() {
         Ok(g) => Some(g),
         Err(e) => {
-            warn!("GeoIP databases unavailable: {e}");
+            // Absent by default until the user runs `net enrich` — not an error.
+            debug!("GeoIP databases unavailable: {e}");
             None
         }
     };
@@ -132,7 +134,7 @@ pub(super) fn run(
         return Ok(());
     }
 
-    print_scan_table(&entries);
+    print_scan_table(&entries, geo.is_some());
     Ok(())
 }
 
@@ -254,6 +256,7 @@ pub(crate) fn evaluate_connection(
         code_id: code_id.clone(),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     };
     let destination = Destination {
         host: host.clone(),
@@ -313,7 +316,7 @@ pub(crate) fn evaluate_connection(
 // ---------------------------------------------------------------------------
 
 /// Print the scan results as a table with summary.
-fn print_scan_table(entries: &[ScanEntry]) {
+fn print_scan_table(entries: &[ScanEntry], geo_available: bool) {
     let rows: Vec<ScanRow> = entries
         .iter()
         .map(|e| ScanRow {
@@ -346,6 +349,11 @@ fn print_scan_table(entries: &[ScanEntry]) {
     println!("Active Network Connections");
     println!("{table}");
     print_summary(entries);
+    if !geo_available {
+        println!(
+            "COUNTRY/OWNER show \"-\" — run `macwarden net enrich` to add GeoIP country/ASN data."
+        );
+    }
 }
 
 /// Print the summary line after the table.
@@ -354,13 +362,20 @@ fn print_summary(entries: &[ScanEntry]) {
     let pids: std::collections::HashSet<u32> = entries.iter().map(|e| e.pid).collect();
     let tracker_count = entries.iter().filter(|e| e.tracker.is_some()).count();
 
-    print!("\n{total} connections, {} processes", pids.len());
+    print!(
+        "\n{}, {}",
+        pluralize(total, "connection", "connections"),
+        pluralize(pids.len(), "process", "processes"),
+    );
     if tracker_count > 0 {
-        print!(" ({tracker_count} tracker connections detected)");
+        print!(
+            " ({} detected)",
+            pluralize(tracker_count, "tracker connection", "tracker connections"),
+        );
     }
     println!();
 
-    let shield = super::net_shield::load_shield_config();
+    let shield = super::net_shield::load_shield_config(&super::macwarden_base_dir());
     if shield.enabled {
         println!("Tracker shield: ACTIVE");
     } else {

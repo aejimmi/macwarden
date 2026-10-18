@@ -6,6 +6,7 @@ use anyhow::Result;
 
 mod cli;
 mod commands;
+mod daemon;
 mod openbinary;
 
 fn main() -> Result<()> {

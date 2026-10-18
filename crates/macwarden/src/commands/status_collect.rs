@@ -192,7 +192,7 @@ fn collect_devices_inner() -> Result<DeviceState> {
 
 /// Collect network shield state and active tracker connection count.
 pub fn collect_network() -> NetworkState {
-    let shield = super::net::net_shield::load_shield_config();
+    let shield = super::net::net_shield::load_shield_config(&super::net::macwarden_base_dir());
     let entries = collect_raw_connections();
     let tracker_connections = entries.iter().filter(|e| e.tracker.is_some()).count() as u32;
 

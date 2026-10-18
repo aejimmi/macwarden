@@ -12,12 +12,15 @@
 //! - [`bundle`] -- macOS `.app` bundle `Info.plist` parser
 //! - [`blocklist`] -- Known-bad hash set loader
 //! - [`error`] -- Error types
+//!
+//! File hashing lives in the shared `openbinary-agent-core` SDK
+//! (`openbinary_agent_core::hash`) — the CLI layer hashes discovered binaries
+//! before building records.
 
 pub mod blocklist;
 pub mod bundle;
 pub mod db;
 pub mod error;
-pub mod hash;
 pub mod record;
 pub mod scanner;
 

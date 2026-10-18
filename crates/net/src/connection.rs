@@ -40,6 +40,14 @@ pub struct ProcessIdentity {
     /// `Some(false)` indicates a broken or tampered signature.
     #[serde(default)]
     pub is_valid_signature: Option<bool>,
+    /// Whether the process is Apple-signed, if resolved.
+    ///
+    /// Populated by the daemon from `procmon`'s code-signing verdict and
+    /// consumed by the "Allow Apple Programs" decide-time shim. `None` when
+    /// the signing state was not retrieved. Additive field -- follows the
+    /// `team_id`/`is_valid_signature` precedent.
+    #[serde(default)]
+    pub is_apple_signed: Option<bool>,
 }
 
 impl fmt::Display for ProcessIdentity {

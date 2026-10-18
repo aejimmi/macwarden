@@ -7,7 +7,6 @@
 
 use std::collections::BTreeMap;
 use std::net::IpAddr;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -76,11 +75,15 @@ impl DnsCacheStore {
     /// # Errors
     ///
     /// Returns an error if the etchdb store cannot be opened.
-    pub fn open(dir: PathBuf, cache: DnsCache) -> Result<Self, PersistError> {
-        std::fs::create_dir_all(&dir).map_err(PersistError::Io)?;
+    pub fn open(dir: &std::path::Path, cache: DnsCache) -> Result<Self, PersistError> {
+        std::fs::create_dir_all(dir).map_err(PersistError::Io)?;
 
-        let store = Store::<DnsCacheDb, WalBackend<DnsCacheDb>>::open_wal(dir)
+        let store = Store::<DnsCacheDb, WalBackend<DnsCacheDb>>::open_wal(dir.to_path_buf())
             .map_err(|e| PersistError::Store(format!("failed to open etch store: {e}")))?;
+
+        // The DNS cache is effectively browsing history: restrict the store dir to
+        // 0700 and its WAL/snapshot files to 0600 so no other local user reads it.
+        secure_store_dir(dir);
 
         let store = Arc::new(store);
 
@@ -208,6 +211,34 @@ fn load_from_store(store: &Store<DnsCacheDb, WalBackend<DnsCacheDb>>, cache: &Dn
     }
 
     loaded
+}
+
+/// Best-effort tighten `dir` to `0700` and every file within it to `0600`
+/// (Unix only). Failures are logged, never fatal.
+fn secure_store_dir(dir: &std::path::Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Err(e) = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700)) {
+            tracing::warn!(path = %dir.display(), %e, "failed to set 0700 on dns store dir");
+        }
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file()
+                && let Err(e) =
+                    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))
+            {
+                tracing::warn!(path = %path.display(), %e, "failed to set 0600 on dns store file");
+            }
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = dir;
+    }
 }
 
 /// Current time as seconds since UNIX epoch.

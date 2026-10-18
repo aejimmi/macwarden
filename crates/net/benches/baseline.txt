@@ -1,0 +1,14 @@
+system: Apple M4 Pro, macOS 26.5, rustc 1.94.0
+commit: c22183c
+date:   2026-07-16
+
+decide/miss_full_scan                          18.9 µs
+decide/tracker_hit                             6.73 µs
+decide/blocklist_hit                           13.4 µs
+decide/ip_only_no_host                         2.08 µs
+decide/safelist_hit                            66.8 ns
+snapshot_decide/block_all_shield_120_conns     1.61 ms
+snapshot_decide/allow_all_120_conns             568 µs
+host_pattern/match_lower_hit                    33.5 ns
+host_pattern/match_lower_miss                   27.6 ns
+host_pattern/match_mixed_case_hit              45.2 ns

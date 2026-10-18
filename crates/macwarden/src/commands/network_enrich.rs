@@ -7,7 +7,7 @@
 use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 
-use tracing::warn;
+use tracing::debug;
 
 use net::{GeoLookup, TrackerDatabase};
 
@@ -66,7 +66,8 @@ pub fn enrich_entries(entries: &mut [NetEntry]) {
     let geo = match GeoLookup::new() {
         Ok(g) => Some(g),
         Err(e) => {
-            warn!("GeoIP databases unavailable: {e}");
+            // Absent by default until the user runs `net enrich` — not an error.
+            debug!("GeoIP databases unavailable: {e}");
             None
         }
     };
@@ -125,7 +126,7 @@ pub fn enrich_entries(entries: &mut [NetEntry]) {
     let tracker_db = match TrackerDatabase::load_builtin() {
         Ok(db) => Some(db),
         Err(e) => {
-            warn!("tracker database unavailable: {e}");
+            debug!("tracker database unavailable: {e}");
             None
         }
     };

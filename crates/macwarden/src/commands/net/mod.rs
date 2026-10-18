@@ -9,18 +9,20 @@ mod net_enrich;
 mod net_explain;
 mod net_import;
 mod net_learn;
-mod net_lsof;
-mod net_rdns;
+pub(crate) mod net_lsof;
+pub(crate) mod net_rdns;
 pub(crate) mod net_scan;
 pub(crate) mod net_shield;
+
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
 
 use net::{
-    AppDb, BlocklistConfig, BlocklistFormat, BlocklistSettings, GroupSettings, NetworkAction,
-    NetworkGroups, NetworkProfile, RuleSet, TrackerCategory, TrackerDatabase, TrackerSettings,
+    AppDb, BlocklistConfig, BlocklistFormat, GroupSettings, NetworkAction, NetworkGroups,
+    PolicyConfig, RuleSet, TrackerCategory, TrackerDatabase,
 };
 
 use crate::cli::NetCommand;
@@ -86,44 +88,53 @@ pub fn run(command: NetCommand) -> Result<()> {
     }
 }
 
-/// Load the default base profile, applying shield overrides if active.
-///
-/// When the tracker shield is enabled, categories configured as `"deny"`
-/// in the shield config upgrade the corresponding `TrackerSettings` field
-/// from `Log` to `Deny`.
-pub(super) fn base_profile() -> NetworkProfile {
-    let shield = net_shield::load_shield_config();
-    let trackers = if shield.enabled {
-        TrackerSettings {
-            advertising: shield.category_action("advertising"),
-            analytics: shield.category_action("analytics"),
-            fingerprinting: shield.category_action("fingerprinting"),
-            social: shield.category_action("social"),
-            ..TrackerSettings::default()
-        }
-    } else {
-        TrackerSettings::default()
-    };
+/// Path to the persisted policy config (`~/.macwarden/net-profile.toml`).
+pub(crate) fn policy_config_path() -> Result<PathBuf> {
+    crate::cli::expand_home("~/.macwarden/net-profile.toml")
+}
 
-    NetworkProfile {
-        default: NetworkAction::Log,
-        trackers,
-        groups: GroupSettings::default(),
-        blocklists: BlocklistSettings::default(),
-        rules: Vec::new(),
+/// Load the persisted [`PolicyConfig`], failing open to the Allow-All default.
+///
+/// A missing or malformed file resolves to the default config (see
+/// [`net::PolicyConfig::load`]); an unresolvable path likewise yields the
+/// default so a broken `HOME` can never brick the network.
+#[must_use]
+pub(crate) fn load_policy_config() -> PolicyConfig {
+    match policy_config_path() {
+        Ok(path) => PolicyConfig::load(&path),
+        Err(e) => {
+            tracing::warn!(error = %e, "cannot resolve policy config path; using Allow-All default");
+            PolicyConfig::default()
+        }
     }
 }
 
-/// Build a resolved `RuleSet` from builtins and the base profile.
-pub(super) fn build_base_ruleset() -> Result<RuleSet> {
-    let tracker_db = TrackerDatabase::load_builtin().context("failed to load tracker database")?;
-    let groups = NetworkGroups::load_builtin().context("failed to load network groups")?;
-    let category_db = AppDb::load_builtin().context("failed to load app categories")?;
-    let profile = base_profile();
+/// Whether "Allow Apple Programs" is currently enabled (for the decide-time
+/// shim). Reads the persisted config so it always reflects the latest mutation.
+#[must_use]
+pub(crate) fn policy_apple_allow() -> bool {
+    load_policy_config().allow_apple_programs
+}
 
-    profile
-        .resolve(&groups, &tracker_db, &category_db, &[])
-        .context("failed to resolve base network profile")
+/// Resolve the `~/.macwarden/` base directory, failing open to a
+/// non-existent path (so the loader yields safe defaults) if `HOME` is unset.
+pub(crate) fn macwarden_base_dir() -> PathBuf {
+    crate::cli::expand_home("~/.macwarden")
+        .unwrap_or_else(|_| PathBuf::from("/nonexistent/.macwarden"))
+}
+
+/// Build a resolved `RuleSet` from builtins, the base profile, and the
+/// persisted policy's synthetic allow-list + DNS Allow rules.
+///
+/// Delegates to [`net::build_base_ruleset`] so the CLI, the daemon, and the
+/// NetworkExtension decision core compose one identical base rule set. The CLI
+/// is a one-shot process with no in-memory banwatch engine, so it reads the
+/// active-ban IP set from the on-disk store here and passes it in as an explicit
+/// input (the loader itself never reopens the store).
+pub(crate) fn build_base_ruleset() -> Result<RuleSet> {
+    let base_dir = macwarden_base_dir();
+    let banned_ips = banwatch::active_ban_ips(&base_dir);
+    net::build_base_ruleset(&base_dir, &banned_ips).context("failed to build base network rule set")
 }
 
 /// Count total domains across all rules in a group.
@@ -256,20 +267,11 @@ struct GroupRow {
 /// `macwarden net groups` -- list all network rule groups.
 fn run_groups(enable: Option<&str>, disable: Option<&str>, json: bool) -> Result<()> {
     let groups = NetworkGroups::load_builtin().context("failed to load network groups")?;
-    if let Some((name, verb)) = enable
-        .map(|n| (n, "enabled"))
-        .or_else(|| disable.map(|n| (n, "disabled")))
+    if let Some((name, want_enabled)) = enable
+        .map(|n| (n, true))
+        .or_else(|| disable.map(|n| (n, false)))
     {
-        if groups.get(name).is_some() {
-            println!("Group `{name}` would be {verb}.");
-            println!("(Profile editing is not yet implemented.)");
-        } else {
-            println!("Unknown group: `{name}`");
-            for g in groups.all() {
-                println!("  {}", g.name);
-            }
-        }
-        return Ok(());
+        return toggle_group(&groups, name, want_enabled);
     }
     let rows: Vec<GroupRow> = groups
         .all()
@@ -296,6 +298,39 @@ fn run_groups(enable: Option<&str>, disable: Option<&str>, json: bool) -> Result
     Ok(())
 }
 
+/// Durably enable or disable a group by mutating the persisted policy config.
+fn toggle_group(groups: &NetworkGroups, name: &str, enabled: bool) -> Result<()> {
+    if groups.get(name).is_none() {
+        println!("Unknown group: `{name}`");
+        for g in groups.all() {
+            println!("  {}", g.name);
+        }
+        return Ok(());
+    }
+    let path = policy_config_path()?;
+    let mut config = PolicyConfig::load(&path);
+    set_group_override(&mut config.groups, name, enabled);
+    config
+        .save(&path)
+        .context("failed to persist group override")?;
+    let verb = if enabled { "enabled" } else { "disabled" };
+    println!("Group `{name}` {verb} (saved to {}).", path.display());
+    println!("A running daemon picks this up on its next reload.");
+    Ok(())
+}
+
+/// Apply a durable enable/disable override to a [`GroupSettings`], keeping the
+/// two override lists mutually exclusive for the named group.
+pub(crate) fn set_group_override(groups: &mut GroupSettings, name: &str, enabled: bool) {
+    groups.enable.retain(|g| g != name);
+    groups.disable.retain(|g| g != name);
+    if enabled {
+        groups.enable.push(name.to_owned());
+    } else {
+        groups.disable.push(name.to_owned());
+    }
+}
+
 #[derive(Debug, Tabled, serde::Serialize)]
 struct TrackerRow {
     #[tabled(rename = "Category")]
@@ -309,7 +344,7 @@ struct TrackerRow {
 /// `macwarden net trackers` -- show tracker shield categories.
 fn run_trackers(stats: bool, json: bool) -> Result<()> {
     let tracker_db = TrackerDatabase::load_builtin().context("failed to load tracker database")?;
-    let shield = net_shield::load_shield_config();
+    let shield = net_shield::load_shield_config(&macwarden_base_dir());
     let domain_stats = tracker_db.stats();
     let cats = [
         (TrackerCategory::Advertising, "Advertising"),

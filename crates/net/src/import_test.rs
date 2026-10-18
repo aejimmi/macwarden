@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing, clippy::panic)]
+
 use super::*;
 use crate::rule::NetworkAction;
 
@@ -204,6 +206,9 @@ fn test_rule_to_toml_serializes() {
         process: "com.apple.Safari".to_owned(),
         dest: "example.com".to_owned(),
         dest_port: Some(443),
+        dest_ip: None,
+        dest_protocol: None,
+        team_id: None,
         action: NetworkAction::Allow,
         enabled: true,
         note: Some("test".to_owned()),

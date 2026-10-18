@@ -16,6 +16,7 @@ fn make_process_id(code_id: &str) -> ProcessIdentity {
         code_id: Some(code_id.to_owned()),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     }
 }
 
@@ -57,7 +58,11 @@ fn test_load_builtin_groups() {
         names.contains(&"communication"),
         "should have communication"
     );
-    assert_eq!(names.len(), 8, "should have exactly 8 builtin groups");
+    assert!(
+        names.contains(&"location-services"),
+        "should have location-services"
+    );
+    assert_eq!(names.len(), 9, "should have exactly 9 builtin groups");
 }
 
 #[test]
@@ -322,6 +327,7 @@ rules = [
         code_id: None,
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     };
     let dest = make_dest_host("example.com");
     assert!(
@@ -358,4 +364,14 @@ fn test_to_grouped_rules_no_overrides_uses_defaults() {
         rules.iter().any(|r| r.group_name == "icloud-services"),
         "icloud-services (default enabled) should appear with no overrides"
     );
+}
+
+#[test]
+fn test_location_services_group_is_loaded() {
+    let groups = NetworkGroups::load_builtin().expect("builtin groups should load");
+    assert!(
+        groups.all().iter().any(|g| g.name == "location-services"),
+        "location-services must be included in BUILTIN_GROUP_SOURCES"
+    );
+    assert!(groups.get("location-services").is_some());
 }

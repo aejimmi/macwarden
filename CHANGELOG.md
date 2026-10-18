@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.0
+
+New:
+- panel: native macOS app (experimental) — live per-app traffic, per-destination verdicts, and quick block/allow from one window
+- panel: per-app detail with process path, code signature, resource usage, and active connections
+- panel: packet trace per app — live packet list, decode tree, raw bytes, and TLS handshake metadata, no decryption
+- panel: quick settings — allow-all or block-all policy, allow Apple programs, allow DNS traffic
+- panel: rules and settings view — edit rule groups, the allow list, and the block list without touching files
+- panel: block toggles say when they are preview-only instead of pretending to enforce
+- daemon: macwarden serve runs the panel backend as a local daemon, auto-started by the panel
+- cli: macwarden with no arguments opens the panel; the services scan moved to macwarden scan
+- firewall: rule files and the DNS cache are now readable only by your user
+- metrics: per-app bandwidth sampling — honest in/out rates in the panel
+
 ## v0.1.2
 
 New:

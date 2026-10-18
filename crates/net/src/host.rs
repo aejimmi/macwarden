@@ -8,6 +8,7 @@
 //!
 //! All matching is case-insensitive.
 
+use std::borrow::Cow;
 use std::fmt;
 
 use globset::{Glob, GlobMatcher};
@@ -86,15 +87,26 @@ impl HostPattern {
     }
 
     /// Returns `true` if `host` matches this pattern.
+    ///
+    /// The comparison is case-insensitive. Hostnames from DNS are almost always
+    /// already lowercase, so the input is only copied-and-folded when it
+    /// actually contains an uppercase byte (`Cow::Borrowed` otherwise). This
+    /// keeps the hot path — called once per rule across the user, group, and
+    /// tracker tiers — allocation-free for the common case.
     pub fn matches(&self, host: &str) -> bool {
-        let lower = host.to_ascii_lowercase();
+        let lower: Cow<'_, str> = if host.bytes().any(|b| b.is_ascii_uppercase()) {
+            Cow::Owned(host.to_ascii_lowercase())
+        } else {
+            Cow::Borrowed(host)
+        };
+        let lower = lower.as_ref();
         match &self.kind {
-            HostPatternKind::Exact(domain) => lower == *domain,
+            HostPatternKind::Exact(domain) => lower == domain.as_str(),
             HostPatternKind::DomainWalk {
                 domain,
                 subdomain_glob,
-            } => lower == *domain || subdomain_glob.is_match(&lower),
-            HostPatternKind::Glob(glob) => glob.is_match(&lower),
+            } => lower == domain.as_str() || subdomain_glob.is_match(lower),
+            HostPatternKind::Glob(glob) => glob.is_match(lower),
         }
     }
 

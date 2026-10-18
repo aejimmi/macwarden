@@ -1,0 +1,22 @@
+[package]
+name = "banwatch"
+description = "Inbound scanner/bruteforce ban engine for macwarden — fail2ban-style per-IP failure accounting, escalating temp bans, and etch-backed active-ban persistence composed into the shared NE ruleset"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+etchdb = { workspace = true }
+ipnet = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tempfile = { workspace = true }

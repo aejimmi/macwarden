@@ -4,135 +4,45 @@
 //! When the shield is enabled, tracker categories set to `"deny"` produce
 //! `DENY` decisions instead of `LOG` in the scan and explain commands.
 
+use std::path::Path;
+
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 
-use net::{NetworkAction, TrackerCategory, TrackerDatabase};
+use net::shield::SHIELD_FILENAME;
+use net::{ShieldConfig, TrackerCategory, TrackerDatabase};
 
-use crate::cli;
-
-// ---------------------------------------------------------------------------
-// Shield config path
-// ---------------------------------------------------------------------------
-
-/// Path to the shield config file.
-const SHIELD_FILE: &str = "~/.macwarden/net-shield.toml";
-
-// ---------------------------------------------------------------------------
-// ShieldConfig
-// ---------------------------------------------------------------------------
-
-/// Persisted tracker shield state.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ShieldConfig {
-    /// Whether the shield is active.
-    #[serde(default)]
-    pub enabled: bool,
-    /// Action for the advertising category (`"deny"` or `"log"`).
-    #[serde(default = "default_log_str")]
-    pub advertising: String,
-    /// Action for the analytics category.
-    #[serde(default = "default_log_str")]
-    pub analytics: String,
-    /// Action for the fingerprinting category.
-    #[serde(default = "default_log_str")]
-    pub fingerprinting: String,
-    /// Action for the social category.
-    #[serde(default = "default_log_str")]
-    pub social: String,
-}
-
-fn default_log_str() -> String {
-    "log".to_owned()
-}
-
-impl Default for ShieldConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            advertising: default_log_str(),
-            analytics: default_log_str(),
-            fingerprinting: default_log_str(),
-            social: default_log_str(),
-        }
-    }
-}
-
-impl ShieldConfig {
-    /// Build a fully-enabled shield (all categories deny).
-    fn enabled_all() -> Self {
-        Self {
-            enabled: true,
-            advertising: "deny".to_owned(),
-            analytics: "deny".to_owned(),
-            fingerprinting: "deny".to_owned(),
-            social: "deny".to_owned(),
-        }
-    }
-
-    /// Build a partially-enabled shield -- only named categories are denied.
-    fn enabled_partial(only: &[String]) -> Self {
-        let mut cfg = Self {
-            enabled: true,
-            ..Self::default()
-        };
-        for cat in only {
-            match cat.to_ascii_lowercase().as_str() {
-                "advertising" => "deny".clone_into(&mut cfg.advertising),
-                "analytics" => "deny".clone_into(&mut cfg.analytics),
-                "fingerprinting" => "deny".clone_into(&mut cfg.fingerprinting),
-                "social" => "deny".clone_into(&mut cfg.social),
-                _ => {} // unknown category -- silently ignored
-            }
-        }
-        cfg
-    }
-
-    /// Return the `NetworkAction` for a named category.
-    pub(crate) fn category_action(&self, name: &str) -> NetworkAction {
-        let val = match name {
-            "advertising" => &self.advertising,
-            "analytics" => &self.analytics,
-            "fingerprinting" => &self.fingerprinting,
-            "social" => &self.social,
-            _ => return NetworkAction::Log,
-        };
-        if val == "deny" {
-            NetworkAction::Deny
-        } else {
-            NetworkAction::Log
-        }
-    }
-
-    /// Check whether a category name is set to deny.
-    pub(crate) fn is_category_denied(&self, name: &str) -> bool {
-        self.category_action(name) == NetworkAction::Deny
-    }
-}
+// `ShieldConfig` itself now lives in `net::shield` so the daemon and the
+// NetworkExtension decision core (`enforce-ne-ffi`) compose one identical
+// ruleset from the same file. This module keeps only the CLI command surface
+// plus the load/save helpers, which take a `base_dir` (the `~/.macwarden/`
+// directory) exactly like `net::loader` and `banwatch::persist` — so they are
+// hermetically testable against a `tempfile::TempDir` rather than hard-wired to
+// `$HOME`.
 
 // ---------------------------------------------------------------------------
 // Load / save
 // ---------------------------------------------------------------------------
 
-/// Load the shield config from disk, returning defaults if absent or unreadable.
-pub(crate) fn load_shield_config() -> ShieldConfig {
-    let Ok(path) = cli::expand_home(SHIELD_FILE) else {
-        return ShieldConfig::default();
-    };
-    let Ok(content) = std::fs::read_to_string(&path) else {
-        return ShieldConfig::default();
-    };
-    toml::from_str(&content).unwrap_or_default()
+/// The shield config path within `base_dir` (`base_dir/net-shield.toml`).
+fn shield_path(base_dir: &Path) -> std::path::PathBuf {
+    base_dir.join(SHIELD_FILENAME)
 }
 
-/// Save the shield config to disk, creating parent directories as needed.
-fn save_shield_config(cfg: &ShieldConfig) -> Result<()> {
-    let path = cli::expand_home(SHIELD_FILE).context("failed to resolve shield config path")?;
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).context("failed to create config directory")?;
-    }
+/// Load the shield config from `base_dir`, returning defaults if absent or
+/// unreadable/malformed (fail-open — [`ShieldConfig::load`] never errors).
+pub(crate) fn load_shield_config(base_dir: &Path) -> ShieldConfig {
+    ShieldConfig::load(&shield_path(base_dir))
+}
+
+/// Save the shield config under `base_dir`, creating the directory as needed and
+/// keeping the file owner-only.
+fn save_shield_config(base_dir: &Path, cfg: &ShieldConfig) -> Result<()> {
+    let path = shield_path(base_dir);
+    std::fs::create_dir_all(base_dir).context("failed to create config directory")?;
+    net::secure_dir(base_dir);
     let content = toml::to_string_pretty(cfg).context("failed to serialize shield config")?;
     std::fs::write(&path, content).context("failed to write shield config")?;
+    net::secure_file(&path);
     Ok(())
 }
 
@@ -142,14 +52,15 @@ fn save_shield_config(cfg: &ShieldConfig) -> Result<()> {
 
 /// Run `macwarden net shield`.
 pub(super) fn run(off: bool, only: &[String]) -> Result<()> {
+    let base_dir = super::macwarden_base_dir();
     if off {
-        return run_disable();
+        return run_disable(&base_dir);
     }
-    run_enable(only)
+    run_enable(&base_dir, only)
 }
 
 /// Enable the tracker shield.
-fn run_enable(only: &[String]) -> Result<()> {
+fn run_enable(base_dir: &Path, only: &[String]) -> Result<()> {
     let tracker_db = TrackerDatabase::load_builtin().context("failed to load tracker database")?;
     let stats = tracker_db.stats();
     let cfg = if only.is_empty() {
@@ -157,7 +68,7 @@ fn run_enable(only: &[String]) -> Result<()> {
     } else {
         ShieldConfig::enabled_partial(only)
     };
-    save_shield_config(&cfg)?;
+    save_shield_config(base_dir, &cfg)?;
 
     let partial = !only.is_empty();
     if partial {
@@ -184,9 +95,9 @@ fn run_enable(only: &[String]) -> Result<()> {
 }
 
 /// Disable the tracker shield.
-fn run_disable() -> Result<()> {
+fn run_disable(base_dir: &Path) -> Result<()> {
     let cfg = ShieldConfig::default();
-    save_shield_config(&cfg)?;
+    save_shield_config(base_dir, &cfg)?;
     println!("Tracker Shield disabled.");
     println!("All tracker connections will be logged (not blocked).");
     Ok(())

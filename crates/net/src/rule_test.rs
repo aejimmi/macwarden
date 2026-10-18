@@ -17,6 +17,7 @@ fn make_process(path: &str, code_id: Option<&str>) -> ProcessIdentity {
         code_id: code_id.map(ToOwned::to_owned),
         team_id: None,
         is_valid_signature: None,
+        is_apple_signed: None,
     }
 }
 
@@ -463,6 +464,7 @@ fn test_team_id_matcher_matches() {
         code_id: Some("com.google.Chrome".to_owned()),
         team_id: Some("EQHXZ8M8AV".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     assert!(pm.matches(&process), "TeamId should match same team_id");
 }
@@ -477,6 +479,7 @@ fn test_team_id_matcher_no_match() {
         code_id: Some("com.other.App".to_owned()),
         team_id: Some("DIFFERENT01".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
     assert!(
         !pm.matches(&process),
@@ -540,6 +543,7 @@ fn test_team_id_matches_connection_via() {
         code_id: Some("com.google.Chrome".to_owned()),
         team_id: Some("EQHXZ8M8AV".to_owned()),
         is_valid_signature: Some(true),
+        is_apple_signed: None,
     };
 
     assert!(

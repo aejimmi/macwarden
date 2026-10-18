@@ -38,11 +38,16 @@ pub fn run(full: bool, format: OutputFormat) -> Result<()> {
     eprint!("  Hashing and inspecting...");
     let _ = stderr().flush();
 
+    // The sealed-volume signature fast-path is only sound while SIP is enabled.
+    // Read the host SIP state once; with SIP off (or unknown) every binary gets
+    // a real code-signing check instead of the hard-coded trusted verdict.
+    let sealed_fastpath = sealed_fastpath_ok(host_sip());
+
     let records: Vec<BinaryRecord> = discovered
         .par_iter()
         .filter_map(|d| {
             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                build_record(d, &blocklist, now_ms)
+                build_record(d, &blocklist, now_ms, sealed_fastpath)
             }))
             .unwrap_or_else(|_| {
                 tracing::warn!(path = %d.executable.display(), "panic during record build");
@@ -97,16 +102,37 @@ fn is_sealed_path(path: &str) -> bool {
     SEALED_PREFIXES.iter().any(|pfx| path.starts_with(pfx))
 }
 
+/// Read the host's System Integrity Protection state via the SDK posture probe.
+fn host_sip() -> openbinary_agent_core::SipStatus {
+    openbinary_agent_core::posture::read().sip
+}
+
+/// Whether the sealed-volume signature fast-path may be trusted.
+///
+/// The fast-path assumes binaries under [`SEALED_PREFIXES`] are Apple-signed
+/// and valid without an actual check. That assumption only holds while the
+/// sealed system volume is protected by SIP. With SIP disabled — or when the
+/// state can't be determined — the fast-path is unsafe and a real signature
+/// check must run instead.
+fn sealed_fastpath_ok(sip: openbinary_agent_core::SipStatus) -> bool {
+    matches!(sip, openbinary_agent_core::SipStatus::Enabled)
+}
+
 /// Build a `BinaryRecord` from a discovered binary.
+///
+/// `sealed_fastpath` is the host-wide decision (computed once) on whether the
+/// sealed-volume signature shortcut may be trusted; see [`sealed_fastpath_ok`].
 fn build_record(
     discovered: &DiscoveredBinary,
     blocklist: &HashBlocklist,
     now_ms: i64,
+    sealed_fastpath: bool,
 ) -> Option<BinaryRecord> {
     let exec_path = &discovered.executable;
 
-    // Streaming hash — reads in 64KB chunks, not the whole file.
-    let sha256 = match inventory::hash::hash_file(exec_path) {
+    // Streaming hash via the shared SDK hasher — reads in chunks, not the
+    // whole file.
+    let sha256 = match openbinary_agent_core::hash::hash_file(exec_path) {
         Ok(h) => h,
         Err(e) => {
             tracing::debug!(path = %exec_path.display(), error = %e, "skipping unhashable binary");
@@ -125,13 +151,15 @@ fn build_record(
         None => (None, None, None),
     };
 
-    // Skip code signing for sealed system paths — the OS guarantees their integrity.
+    // Skip code signing for sealed system paths only when SIP still guarantees
+    // their integrity. Otherwise fall through to a real signature check.
     let path_str = exec_path.to_string_lossy();
-    let (code_id, team_id, is_apple_signed, is_valid_sig) = if is_sealed_path(&path_str) {
-        (None, None, true, true)
-    } else {
-        get_code_signing(exec_path)
-    };
+    let (code_id, team_id, is_apple_signed, is_valid_sig) =
+        if sealed_fastpath && is_sealed_path(&path_str) {
+            (None, None, true, true)
+        } else {
+            get_code_signing(exec_path)
+        };
 
     let is_blocklisted = blocklist.contains(&sha256);
 
@@ -359,3 +387,7 @@ fn epoch_ms() -> i64 {
         .map(|d| d.as_millis() as i64)
         .unwrap_or(0)
 }
+
+#[cfg(test)]
+#[path = "scan_test.rs"]
+mod scan_test;

@@ -665,3 +665,74 @@ fn test_prune_zero_duration_deletes_all() {
     let summary = store.summary(&TimeRange::all()).expect("summary");
     assert_eq!(summary.total_events, 0);
 }
+
+// ---------------------------------------------------------------------------
+// banwatch ban events (spec 010 R9)
+// ---------------------------------------------------------------------------
+
+fn ban_event(ip: &str, detector: &str, ban_secs: Option<u64>) -> MetricEvent {
+    MetricEvent::IpBanned {
+        ip: ip.to_owned(),
+        detector: detector.to_owned(),
+        ban_secs,
+        escalation_count: 2,
+        source: detector.to_owned(),
+    }
+}
+
+fn unban_event(ip: &str, detector: &str) -> MetricEvent {
+    MetricEvent::IpUnbanned {
+        ip: ip.to_owned(),
+        detector: detector.to_owned(),
+    }
+}
+
+#[test]
+fn test_ban_event_kind_discriminants() {
+    assert_eq!(
+        ban_event("1.2.3.4", "port-scan", Some(3600)).kind(),
+        "ip_banned"
+    );
+    assert_eq!(unban_event("1.2.3.4", "port-scan").kind(), "ip_unbanned");
+}
+
+#[test]
+fn test_ban_event_payload_roundtrips() {
+    let event = ban_event("203.0.113.9", "repeat-blocked", Some(3600));
+    let json = event.payload_json().expect("payload");
+    let back: MetricEvent = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(back.kind(), "ip_banned");
+    // Full-field round-trip: re-serialized value equals the original's.
+    assert_eq!(
+        serde_json::to_value(&back).expect("value"),
+        serde_json::to_value(&event).expect("value"),
+    );
+    assert!(json.contains("\"escalation_count\":2"));
+    assert!(json.contains("\"detector\":\"repeat-blocked\""));
+}
+
+#[test]
+fn test_ban_timeline_queryable_by_time_range() {
+    let store = MetricsStore::open_in_memory().expect("open");
+    store
+        .record_at(1_000, &ban_event("203.0.113.1", "port-scan", Some(600)))
+        .expect("record ban");
+    store
+        .record_at(2_000, &unban_event("203.0.113.1", "port-scan"))
+        .expect("record unban");
+    // An out-of-range event is excluded.
+    store
+        .record_at(9_999, &ban_event("203.0.113.2", "manual", None))
+        .expect("record");
+
+    let rows = store
+        .ban_timeline(&TimeRange::new(0, 5_000).expect("range"))
+        .expect("timeline");
+    assert_eq!(rows.len(), 2, "only the two in-range events");
+    // Newest first.
+    assert_eq!(rows[0].kind, "ip_unbanned");
+    assert_eq!(rows[1].kind, "ip_banned");
+    assert_eq!(rows[1].ip, "203.0.113.1");
+    assert_eq!(rows[1].source.as_deref(), Some("port-scan"));
+    assert_eq!(rows[0].source, None, "unban rows carry no source");
+}

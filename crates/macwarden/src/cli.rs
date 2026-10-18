@@ -14,45 +14,24 @@ use crate::commands;
 
 /// A profile-based daemon firewall for macOS.
 ///
-/// Run with no arguments to see what's on your machine.
+/// Run with no arguments to open the panel (macOS). The daemon that backs it
+/// runs via `macwarden serve`, and the panel auto-starts one when absent.
 #[derive(Debug, Parser)]
 #[command(name = "macwarden", version, about)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
 
-    // Flags for the default (scan) mode — when no subcommand is given.
-    /// Filter by service category (e.g. telemetry, networking).
-    #[arg(short, long)]
-    category: Option<String>,
-
-    /// Show only uncategorized / unknown services.
-    #[arg(short = 'u', long)]
-    unknown: bool,
-
-    /// Show service groups instead of individual services.
-    #[arg(short, long)]
-    groups: bool,
-
-    /// Sort order for groups view.
-    #[arg(long, default_value = "name")]
-    sort: GroupSort,
-
-    /// Show only groups with this safety tier (with --groups).
+    /// Launch the panel with the deterministic demo stream
+    /// (offline dev, stable screenshots).
     #[arg(long)]
-    filter: Option<SafetyFilter>,
-
-    /// Output format.
-    #[arg(short, long, default_value = "table")]
-    format: OutputFormat,
+    demo: bool,
 }
 
 /// Subcommands.
 #[derive(Debug, Subcommand)]
 enum Commands {
     /// Scan and list all discovered launchd services.
-    ///
-    /// This is also the default when no subcommand is given.
     Scan {
         /// Filter by service category (e.g. telemetry, networking).
         #[arg(short, long)]
@@ -220,6 +199,12 @@ enum Commands {
         #[command(subcommand)]
         command: NetCommand,
     },
+
+    /// Run the daemon IPC server that backs the GPUI panel (foreground).
+    ///
+    /// Binds a Unix socket and serves live snapshots, history, detail, and
+    /// rule mutations to the panel. Runs until SIGTERM/SIGINT.
+    Serve,
 }
 
 /// Subcommands for the `net` firewall system.
@@ -471,18 +456,19 @@ pub fn read_active_profile() -> Result<String> {
 
 /// Initialise tracing, parse arguments, and dispatch to the correct command.
 pub fn run() -> Result<()> {
-    init_tracing();
-
     let cli = Cli::parse();
 
+    // Initialise tracing only after parsing so the default log level can depend
+    // on the command: long-running/daemon commands keep operational warnings on
+    // stderr, interactive commands stay quiet so routine warnings never leak
+    // into their pretty output. RUST_LOG still overrides either way.
+    init_tracing(default_log_directive(cli.command.as_ref()));
+
     match cli.command {
-        // No subcommand → default scan.
+        // No subcommand → open the panel (macOS); the daemon runs via `serve`.
         None => {
-            if cli.groups {
-                commands::groups::run(cli.sort, cli.filter)
-            } else {
-                commands::scan::run(cli.category.as_deref(), cli.unknown, cli.format)
-            }
+            launch_panel(cli.demo);
+            Ok(())
         }
 
         Some(Commands::Scan {
@@ -507,7 +493,7 @@ pub fn run() -> Result<()> {
 
         Some(Commands::Use { profile, dry_run }) => match profile {
             Some(name) => commands::apply::run(&name, dry_run),
-            None => commands::status::run(cli.format),
+            None => commands::status::run(OutputFormat::Table),
         },
 
         Some(Commands::Block {
@@ -560,15 +546,126 @@ pub fn run() -> Result<()> {
         Some(Commands::Inventory { ref command }) => commands::inventory::run(command),
 
         Some(Commands::Net { command }) => commands::net::run(command),
+
+        Some(Commands::Serve) => commands::serve::run(),
     }
 }
 
-/// Initialise `tracing-subscriber` with `RUST_LOG` env filter.
-fn init_tracing() {
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn"));
+/// Open the GPUI panel on the process main thread.
+///
+/// GPUI must run on the main thread, so this is called directly from
+/// [`run`] — never wrapped in a runtime or a spawned thread. Tracing is
+/// already initialised by [`init_tracing`]; the panel installs no subscriber
+/// of its own, so there is no double-init. On non-macOS the panel does not
+/// exist: print a short note and return.
+#[cfg(target_os = "macos")]
+fn launch_panel(demo: bool) {
+    // When run from an interactive terminal, re-exec detached so the shell isn't
+    // blocked by the long-lived GUI; the detached child (marked via env) then
+    // opens the panel inline. A non-TTY launch (Finder/launchd .app) runs inline.
+    if detach_panel_from_terminal() {
+        return;
+    }
+    macwarden_ui::run(demo);
+}
+
+/// Non-macOS stub: the panel is macOS-only.
+#[cfg(not(target_os = "macos"))]
+fn launch_panel(_demo: bool) {
+    eprintln!("macwarden: the panel is macOS-only. Run `macwarden --help` for available commands.");
+}
+
+/// Env marker set on the detached panel child so it does not respawn again.
+#[cfg(target_os = "macos")]
+const PANEL_SPAWNED_ENV: &str = "MACWARDEN_PANEL_SPAWNED";
+
+/// Detach the no-subcommand panel launch from the controlling terminal.
+///
+/// Re-execs this binary with the original arguments, detached (own process
+/// group, null stdio), and returns `true` so the caller exits 0 immediately —
+/// leaving the shell free while the GUI runs in the background. No-op returning
+/// `false` when: we are already the detached child (the [`PANEL_SPAWNED_ENV`]
+/// marker is set), stdin/stderr is not a TTY (a Finder/launchd `.app` launch, so
+/// run the panel inline), or the re-exec cannot be set up (fall back to inline).
+#[cfg(target_os = "macos")]
+fn detach_panel_from_terminal() -> bool {
+    use std::os::unix::process::CommandExt;
+    use std::process::{Command, Stdio};
+
+    if std::env::var_os(PANEL_SPAWNED_ENV).is_some() || !stdio_is_tty() {
+        return false;
+    }
+    let Ok(exe) = std::env::current_exe() else {
+        return false;
+    };
+    let args: Vec<std::ffi::OsString> = std::env::args_os().skip(1).collect();
+    match Command::new(exe)
+        .args(&args)
+        .env(PANEL_SPAWNED_ENV, "1")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .process_group(0)
+        .spawn()
+    {
+        Ok(_) => {
+            eprintln!("macwarden: panel launched in the background.");
+            true
+        }
+        Err(e) => {
+            eprintln!("macwarden: could not detach panel ({e}); running in the foreground.");
+            false
+        }
+    }
+}
+
+/// Whether stdin or stderr is a terminal — i.e. we were launched from a shell
+/// rather than by Finder/launchd (whose `.app` launch has no controlling TTY).
+#[cfg(target_os = "macos")]
+fn stdio_is_tty() -> bool {
+    fd_is_tty(libc::STDIN_FILENO) || fd_is_tty(libc::STDERR_FILENO)
+}
+
+/// Whether one file descriptor refers to a terminal.
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+fn fd_is_tty(fd: i32) -> bool {
+    // SAFETY: `isatty` takes a file descriptor and returns 1/0; it reads no
+    // memory and cannot fail in a way that is unsafe.
+    unsafe { libc::isatty(fd) == 1 }
+}
+
+/// Default tracing directive used when `RUST_LOG` is unset.
+///
+/// Long-running / daemon commands (`serve`, `watch`, `net log`, `net learn`)
+/// keep operational warnings on stderr — that output is wanted while they run.
+/// Every other command produces pretty human output to stdout, so routine
+/// operational warnings (e.g. "GeoIP databases unavailable") must not leak
+/// into it; those default to `error` and stay silent unless something failed.
+fn default_log_directive(command: Option<&Commands>) -> &'static str {
+    match command {
+        Some(Commands::Serve | Commands::Watch { .. }) => "warn",
+        Some(Commands::Net { command }) if net_command_streams_logs(command) => "warn",
+        _ => "error",
+    }
+}
+
+/// Whether a `net` subcommand runs in the foreground streaming operational logs.
+fn net_command_streams_logs(command: &NetCommand) -> bool {
+    matches!(command, NetCommand::Log | NetCommand::Learn { .. })
+}
+
+/// Initialise `tracing-subscriber` with the `RUST_LOG` env filter, falling back
+/// to `default` (see [`default_log_directive`]) when `RUST_LOG` is unset.
+fn init_tracing(default: &str) {
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(default));
 
     tracing_subscriber::fmt()
         .with_env_filter(filter)
         .with_writer(std::io::stderr)
         .init();
 }
+
+#[cfg(test)]
+#[path = "cli_test.rs"]
+mod cli_test;

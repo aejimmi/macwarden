@@ -9,7 +9,7 @@
 
 ## Service Catalog
 
-- 255 annotated macOS services — curated database with human-readable descriptions, categories, safety levels, and macOS version ranges.
+- 256 annotated macOS services — curated database with human-readable descriptions, categories, safety levels, and macOS version ranges.
 - 10 service categories — Core OS, Networking, Security, Media, Cloud, Telemetry, Input, Accessibility, Developer, Third-Party.
 - 4 safety levels — Critical (never disable), Important (degrades functionality), Optional (safe to disable), Telemetry (recommended to disable).
 - Glob pattern matching — annotations use wildcard patterns (e.g., `com.apple.Siri.*`) to cover service families with a single entry.
@@ -50,7 +50,7 @@
 - 6-level decision precedence — exact deny, exact allow, glob deny, glob allow, category rule, default allow. First match wins.
 - Decision transparency — every allow/deny decision includes the reason (which rule matched, from which profile).
 - Diff computation — compares current system state against a profile and generates the minimal set of actions needed.
-- Safe-list protection — 16 critical service patterns (WindowServer, launchd, securityd, configd, xpc, etc.) are hardcoded and cannot be disabled by any profile or command.
+- Safe-list protection — 17 critical service patterns (WindowServer, launchd, securityd, mDNSResponder, configd, xpc, etc.) are hardcoded and cannot be disabled by any profile or command.
 
 ## Enforcement
 
@@ -87,7 +87,7 @@
 - Five-tier rule matching — exact deny, exact allow, glob deny, glob allow, default action. First match wins with full transparency.
 - Tracker shield — one-command protection against advertising, analytics, fingerprinting, and social tracking domains across 4 curated categories.
 - 9 network rule groups — pre-built rule sets for browser essentials, communication, development, gaming, iCloud services, location services, macOS system services, media streaming, and productivity.
-- 21 app profiles — per-app classification with expected domains, categories, and breakage risk ratings for fine-grained network policy.
+- 20 app profiles — per-app classification with expected domains, categories, and breakage risk ratings for fine-grained network policy.
 - GeoIP enrichment — embedded MaxMind databases for country and ASN lookups on every connection.
 - Graylist detection — identifies abusable Apple-signed binaries (shells, curl, python, scripting runtimes) that bypass naive code-signing trust.
 - Essential domain safelist — OCSP, NTP, and system update domains are never blocked, preventing self-inflicted breakage.
@@ -100,12 +100,41 @@
 - GeoIP database management — `net enrich` downloads MaxMind GeoLite2-Country and ASN databases; `--status` shows current database info; `--remove` cleans up.
 - Local network detection — RFC 1918, loopback, link-local, and multicast addresses are identified and excluded from GeoIP lookups, privacy scoring, and tracker analysis.
 - Quick block/unblock — `net block --app Safari --host tracker.com` creates a deny rule; `net unblock` removes it.
+- Owner-only storage — rule files, the policy config, and the shield config are tightened to 0600/0700.
+- Symlink-safe rule loading — user rule files are opened with `O_NOFOLLOW` and capped in size and count, so a tampered store can't redirect the loader.
 
 ## Network Visibility
 
 - Active connection listing — shows all network connections (ESTABLISHED, LISTEN, UDP) by service and group.
 - Service cross-referencing — maps network connections from `lsof` back to launchd services and groups.
 - Deduplication — consolidates multiple connections per PID into clean output.
+
+## Panel (experimental)
+
+- Native macOS panel — live per-app traffic with search, and tabs for apps and processes.
+- Per-app detail — process path, code signature, user, resource usage, and active connections with IPs, ports, and byte counts.
+- Quick settings — allow-all or block-all policy, allow Apple programs, and allow DNS traffic.
+- Rules and settings — edit rule groups, the allow list, and the block list from the panel.
+- Per-app actions — block or allow an app's network and open its packet trace; launch prevention is visible but preview-only today.
+- Honest enforcement state — block toggles say when they are preview-only instead of pretending to enforce.
+- Menu-bar presence — the app keeps running when the window is hidden and reopens from the menu bar.
+- Live bandwidth — in/out rates in the panel status bar.
+- Demo mode — `macwarden --demo` opens the panel on a deterministic synthetic stream for offline demos.
+
+## Daemon
+
+- Panel backend — `macwarden serve` runs a local daemon over a Unix socket; the panel auto-starts one when absent.
+- Same-user only — clients are authenticated by peer credentials; no shared secret to manage.
+- Live data — snapshots, history, per-app detail, and rule mutations; mutations hot-reload the live rule set.
+- Graceful fallback — without a daemon, the panel samples live traffic with `nettop` and degrades honestly.
+
+## Packet Trace
+
+- Per-app packet trace — live packet list scoped to the selected app's connections.
+- Decode tree — Frame, Ethernet, IP, TCP/UDP, TLS, and a raw hex view per packet.
+- TLS handshake metadata — SNI, TLS version, and cipher without decryption; HTTPS bodies stay encrypted.
+- Protocol filters — All, TCP, UDP, DNS, HTTP, TLS, and errors, with a dropped-packet counter.
+- Live or demo — real BPF capture when the daemon has root or `access_bpf` access, otherwise a clearly-labeled demo stream.
 
 ## Endpoint Security
 
@@ -127,13 +156,15 @@
 - Passive DNS cache — maps IP addresses to hostnames from Endpoint Security network events, no active queries needed.
 - LRU eviction — bounded memory usage with configurable capacity (default 10,000 entries).
 - Crash-safe persistence — etchdb WAL-backed store flushes cache to disk every 60 seconds, surviving daemon restarts and crashes.
+- Owner-only permissions — the cache store directory is 0700 and its files 0600, so browsing history is not readable by other local users.
 - Warm-start loading — persisted entries are restored on startup with TTL adjusted for elapsed time since last flush.
 - DNS wire parser — RFC 1035 response parser for future BPF/pcap integration on port 53.
 
 ## Metrics
 
 - SQLite-backed event store — persists enforcement, network, and sensor events to `~/.macwarden/metrics.db`.
-- 6 event types — service enforcement, network decisions, sensor activations, profile changes, scrub operations, and system events.
+- 9 event types — service enforcement, service drift, sweep stats, sensor activations, network decisions, bandwidth samples, IP bans, IP unbans, and ES stats.
+- Per-app bandwidth — in/out byte samples power honest hour/today rates in the panel.
 - Time-range queries — retrieve events by time window for dashboards and reporting.
 - Per-app statistics — connection counts, blocked counts, and top domains per application.
 
@@ -178,7 +209,8 @@
 
 ## CLI
 
-- 16 commands — scan, info, use, block, allow, watch, scrub, undo, network, devices, net, status, lookup, inventory scan, inventory lookup.
+- 15 subcommands — scan, info, use, block, allow, watch, scrub, undo, network, devices, status, lookup, inventory, net, serve.
+- Panel-first launch — running `macwarden` with no arguments opens the panel; the services scan moved to `macwarden scan`.
 - Scan filtering — filter services by category, show only unknown/uncategorized services, or view by group.
 - Group sorting — sort groups by name, service count, running count, or safety level.
 - Dual output formats — human-readable tables with rounded borders or JSON for scripting.

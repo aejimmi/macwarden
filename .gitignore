@@ -12,6 +12,9 @@ AGENTS-CONTEXT.md
 vendors/
 /vendors/
 
+# built system-extension bundle (ad-hoc signed artifacts, see system-extension/build.sh)
+system-extension/build/
+
 TODO-*
 
 # GeoIP databases (EULA prohibits redistribution)

@@ -27,8 +27,10 @@ pub mod rollback;
 pub mod scan;
 pub mod scrub;
 pub(crate) mod scrub_fs;
+pub mod serve;
 pub mod status;
 pub(crate) mod status_collect;
+pub mod textfmt;
 
 // Retained — not routed from CLI but code preserved for future use.
 #[allow(dead_code)]

@@ -32,6 +32,7 @@ pub const CRITICAL_SERVICES: &[&str] = &[
     "com.apple.IOKit*",
     "com.apple.fseventsd",
     "com.apple.distnoted",
+    "com.apple.mDNSResponder",
 ];
 
 /// Compiled glob set for efficient matching against [`CRITICAL_SERVICES`].
